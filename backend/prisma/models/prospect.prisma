@@ -1,0 +1,123 @@
+enum ProspectStage {
+  REQUIREMENT
+  FOLLOW_UP
+  DEMO
+  PROPOSAL
+  NEGOTIATION
+  WON
+  LOST
+}
+
+enum ProspectActivityType {
+  CONVERSION
+  STAGE_CHANGE
+  CALL
+  MEETING
+  EMAIL
+  FOLLOW_UP_SET
+  QUOTATION_CREATED
+  QUOTATION_UPDATED
+}
+
+enum ProspectFollowUpType {
+  CALL
+  EMAIL
+  MEETING
+  WHATSAPP
+  SITE_VISIT
+}
+
+enum ProspectReminder {
+  MINUTES_15
+  MINUTES_30
+  HOUR_1
+  DAY_1
+}
+
+model Prospect {
+  id String @id @default(uuid())
+
+  prospectNo String
+
+  leadId String? @unique
+  lead   Lead?   @relation(fields: [leadId], references: [id])
+
+  stage ProspectStage @default(REQUIREMENT)
+
+  expectedValue Float?
+  closeDate     DateTime?
+
+  followUpDate         DateTime?
+  followUpTime         String?
+  followUpType         ProspectFollowUpType?
+  followUpNotes        String?
+  followUpReminder     ProspectReminder?
+  followUpAssignedToId String?
+  followUpAssignedTo   User?                 @relation("FollowUpProspects", fields: [followUpAssignedToId], references: [id])
+
+  notes String?
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  assignedToId String?
+  assignedTo   User?   @relation("AssignedProspects", fields: [assignedToId], references: [id])
+
+  deletedAt   DateTime?
+  deletedById String?
+  deletedBy   User?     @relation("ProspectDeleter", fields: [deletedById], references: [id])
+
+  activities ProspectActivity[]
+  quotations Quotation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([organizationId, prospectNo])
+  @@index([prospectNo])
+  @@index([stage])
+  @@index([assignedToId])
+  @@index([followUpAssignedToId])
+  @@index([followUpDate])
+  @@index([organizationId])
+  @@index([deletedAt])
+}
+
+enum FollowUpHealth {
+  DONE
+  OK
+  WARNING
+  OVERDUE
+  NONE
+}
+
+model ProspectActivity {
+  id String @id @default(uuid())
+
+  prospectId String
+  prospect   Prospect @relation(fields: [prospectId], references: [id], onDelete: Cascade)
+
+  type     ProspectActivityType
+  title    String
+  summary  String
+  details  String?
+  metadata Json?
+
+  followUpHealth FollowUpHealth?
+
+  createdById String?
+  createdBy   User?   @relation("ProspectActivities", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([prospectId, createdAt(sort: Desc)])
+  @@index([createdById])
+}
+
+model ProspectSequence {
+  organizationId String   @id
+  lastSequence   Int      @default(0)
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}

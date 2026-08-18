@@ -1,0 +1,7 @@
+model UserSequence {
+  organizationId String   @id // 1 org = 1 sequence
+  lastSequence   Int      @default(0)
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}

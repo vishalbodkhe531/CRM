@@ -1,0 +1,45 @@
+/// Per-user event notification.
+///
+/// Distinct from Announcement: an announcement is authored by a human and
+/// broadcast to many; a notification is emitted by the system for exactly one
+/// recipient. They share the bell UI and nothing else.
+model Notification {
+  id String @id @default(uuid())
+
+  userId String
+  user   User   @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Denormalized from the user so the feed can be scoped without a join, and
+  /// so a notification survives a user moving organizations.
+  organizationId String
+  organization   Organization @relation("OrganizationNotifications", fields: [organizationId], references: [id], onDelete: Cascade)
+
+  /// Plain String rather than a Prisma enum, for the same reason as
+  /// AuditLog.action: adding a new notification type must not need a migration.
+  /// Allowed values are constrained by NOTIFICATION_TYPES in the contracts.
+  type String
+
+  title String
+  /// Plain text. Rendered as {body} in JSX — never as HTML.
+  body String
+
+  /// Deep-link target. The frontend maps entityType to a route.
+  entityType String?
+  entityId   String?
+
+  readAt DateTime?
+
+  /// Idempotency key for job-generated rows.
+  ///
+  /// This is what makes the cron safe to run twice: the job computes a
+  /// deterministic key (e.g. "FOLLOW_UP_DUE:<prospectId>:<dueAt>") and the
+  /// unique index makes a duplicate insert a no-op instead of a second buzz on
+  /// somebody's phone. Null for notifications raised directly by user actions,
+  /// which are already once-per-event.
+  dedupeKey String? @unique
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, readAt, createdAt(sort: Desc)])
+  @@index([organizationId, createdAt])
+}

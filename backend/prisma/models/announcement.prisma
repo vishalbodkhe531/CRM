@@ -1,0 +1,104 @@
+/// Authored content pushed to many users at once.
+///
+/// Not to be confused with a per-user notification: an announcement is written by
+/// a human and broadcast, while a notification is emitted by the system for one
+/// recipient. The two share the bell UI but nothing else.
+enum AnnouncementScope {
+  /// Authored by super-admin. Crosses tenants.
+  PLATFORM
+  /// Authored by an org admin. Confined to that org.
+  ORGANIZATION
+}
+
+enum AnnouncementSeverity {
+  INFO
+  WARNING
+  CRITICAL
+}
+
+enum AnnouncementStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum AnnouncementPlacement {
+  BANNER
+  BELL
+  BOTH
+}
+
+model Announcement {
+  id String @id @default(uuid())
+
+  title String
+  /// Plain text. Rendered as {body} in JSX — NEVER dangerouslySetInnerHTML.
+  /// An org admin can author this, so treating it as HTML is stored XSS across
+  /// the whole tenant.
+  body String
+
+  severity  AnnouncementSeverity  @default(INFO)
+  placement AnnouncementPlacement @default(BELL)
+  scope     AnnouncementScope
+  status    AnnouncementStatus    @default(DRAFT)
+
+  /// The AUTHOR's organization. Null for PLATFORM announcements.
+  /// Do not confuse with targetOrganizationIds, which is the audience.
+  organizationId String?
+  organization   Organization? @relation("OrganizationAnnouncements", fields: [organizationId], references: [id], onDelete: Cascade)
+
+  /// PLATFORM only. Empty = every organization. Non-empty = only these ids.
+  /// A plain String[] rather than a join table: the audience is a snapshot of
+  /// intent at publish time and is never queried from the other direction.
+  targetOrganizationIds String[] @default([])
+
+  /// Empty = every role in scope. Non-empty = only these roles.
+  targetRoles Role[] @default([])
+
+  /// A SCHEDULED row becomes visible because the feed query compares publishAt
+  /// to now(), not because a job flips the status — there is no scheduler in this
+  /// app. See announcement.repository.buildVisibilityWhere.
+  publishAt DateTime?
+  expiresAt DateTime?
+
+  dismissible Boolean @default(true)
+
+  createdById String?
+  createdBy   User?   @relation("AnnouncementCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  /// Soft delete. Same pattern as User.deletedAt / Organization.deletedAt.
+  deletedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  receipts AnnouncementReceipt[]
+
+  @@index([status, scope, publishAt])
+  @@index([organizationId, status])
+  @@index([expiresAt])
+  @@index([deletedAt])
+}
+
+/// Per-user read/dismiss state for an announcement.
+///
+/// Rows are created LAZILY — the first time a given user reads or dismisses a
+/// given announcement. Absence of a row means "unread". Never fan out at publish
+/// time: one platform broadcast would write a row for every user of every tenant,
+/// and re-targeting would then have to reconcile them.
+model AnnouncementReceipt {
+  id String @id @default(uuid())
+
+  announcementId String
+  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation("AnnouncementReceipts", fields: [userId], references: [id], onDelete: Cascade)
+
+  readAt      DateTime?
+  dismissedAt DateTime?
+
+  @@unique([announcementId, userId])
+  @@index([userId, dismissedAt])
+}

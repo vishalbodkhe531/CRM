@@ -1,0 +1,2232 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [5 0 R 7 0 R 9 0 R 11 0 R 13 0 R 15 0 R 17 0 R 19 0 R 21 0 R 23 0 R 25 0 R 27 0 R 29 0 R 31 0 R 33 0 R 35 0 R 37 0 R] /Count 17 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+4 0 obj
+<< /Length 3389 >>
+stream
+BT
+/F1 9.5 Tf
+50 748 Td
+12 TL
+(Admin CRM Audit Report) Tj
+T*
+() Tj
+T*
+(Date: 2026-07-29) Tj
+T*
+(Scope: Admin access only) Tj
+T*
+(Modules audited: Dashboard, Notifications, Users, Items, Leads, Prospects, Quotations,) Tj
+T*
+(Customers, Reports, Profile, Settings, Help) Tj
+T*
+(Audit method: Static code and architecture review of frontend, backend, route guards, Prisma) Tj
+T*
+(models, validation schemas, service logic, subscription gates, and UI flows.) Tj
+T*
+() Tj
+T*
+(Note: No application code or functionality was modified for this audit. This report and its PDF) Tj
+T*
+(export are the only artifacts created.) Tj
+T*
+() Tj
+T*
+(Executive Summary) Tj
+T*
+() Tj
+T*
+(Admin access has a strong base: non-super-admin users are pinned to their own organization by) Tj
+T*
+(backend middleware, suspended organizations are blocked at authentication time, most tenant) Tj
+T*
+(write routes are subscription-gated, and Admin role permissions are generally narrower than) Tj
+T*
+(Super Admin permissions.) Tj
+T*
+() Tj
+T*
+(The highest risk is not broad Admin access across organizations. The highest risk is data) Tj
+T*
+(integrity inside the Admin organization. Admins can currently delete converted leads, and) Tj
+T*
+(prospects are hard-deleted even when they are terminal WON or LOST. Because customers are) Tj
+T*
+(derived from Prospect.stage === WON, these delete paths can damage customer lineage, reports,) Tj
+T*
+(and historical CRM data.) Tj
+T*
+() Tj
+T*
+(The second major risk is API-side validation and authorization drift. The Leads API accepts a) Tj
+T*
+(raw productInterested item id without confirming that the item belongs to the same organization.) Tj
+T*
+(The Profile API accepts organization PDF asset uploads from any authenticated organization user) Tj
+T*
+(if they craft the request, even though the UI only exposes this to Admin and Manager.) Tj
+T*
+() Tj
+T*
+(Top priorities:) Tj
+T*
+() Tj
+T*
+(| Priority | Severity | Issue | Main affected area |) Tj
+T*
+(|---|---|---|---|) Tj
+T*
+(| P0 | Critical | Admin can delete converted leads and hard-delete terminal/customer prospects |) Tj
+T*
+(Leads, Prospects, Customers, Reports |) Tj
+T*
+(| P0 | High | Lead productInterested can connect to an item from another organization by crafted) Tj
+T*
+(API request | Leads, Items, tenant isolation |) Tj
+T*
+(| P0 | High | Organization PDF assets are guarded by UI only, not backend role permission |) Tj
+T*
+(Profile, quotation PDF assets |) Tj
+T*
+(| P0 | High | /quotations/stats is shadowed by /:id, causing quotation stat cards to fail or) Tj
+T*
+(show zero | Quotations |) Tj
+T*
+(| P1 | High | Approved quotations do not automatically create customers or mark prospects as WON) Tj
+T*
+(| Quotations, Customers |) Tj
+T*
+(| P1 | Medium | Admin audit trail is incomplete for important workflow actions | Leads, Items,) Tj
+T*
+(Prospects, Profile, Reports |) Tj
+T*
+(| P1 | Medium | Several UI stats count current page or capped data instead of true organization) Tj
+T*
+(totals | Users, Items, Prospects |) Tj
+T*
+(| P1 | Medium | Reports endpoint computes all report tabs for each tab request and uses) Tj
+T*
+(in-memory aggregation | Reports |) Tj
+T*
+(| P2 | Low | Help content is outdated and contains Admin guidance for actions Admin cannot) Tj
+T*
+(perform | Help |) Tj
+T*
+() Tj
+T*
+(Cross-Cutting Admin Architecture Findings) Tj
+T*
+() Tj
+T*
+(Role and Permission Control) Tj
+T*
+() Tj
+T*
+(Observed:) Tj
+T*
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 4 0 R >>
+endobj
+6 0 obj
+<< /Length 3081 >>
+stream
+BT
+/F1 9.5 Tf
+50 748 Td
+12 TL
+(- Admin has backend permissions for users, items, leads, prospects, quotations, reports, audit) Tj
+T*
+(read, announcements, billing read, dashboard read, and organization read/update.) Tj
+T*
+(- Admin cannot create Admin users through the backend permission utility; Admin can create) Tj
+T*
+(Manager and Executive users.) Tj
+T*
+(- Super Admin-only password reset is enforced in userService.resetUserPassword, even though the) Tj
+T*
+(route uses a broader USER_UPDATE permission.) Tj
+T*
+(- Admin dashboard route additionally enforces exact role match.) Tj
+T*
+() Tj
+T*
+(Issues:) Tj
+T*
+(- Some sensitive capabilities rely on frontend hiding rather than backend authorization. The) Tj
+T*
+(clearest example is Profile organization asset upload.) Tj
+T*
+(- Admin-visible Help still says Admin can reset user passwords, but backend restricts this to) Tj
+T*
+(Super Admin.) Tj
+T*
+() Tj
+T*
+(Best-practice solution:) Tj
+T*
+(- Treat frontend role checks as UX only.) Tj
+T*
+(- Add backend permission checks for every role-sensitive file field and workflow action.) Tj
+T*
+(- Maintain a role capability matrix and test it at API level for Admin, Manager, Executive, and) Tj
+T*
+(Super Admin.) Tj
+T*
+() Tj
+T*
+(Organization Data Isolation) Tj
+T*
+() Tj
+T*
+(Observed:) Tj
+T*
+(- requireOrganization pins every non-super-admin request to req.user.organizationId.) Tj
+T*
+(- Core tenant modules query by organizationId.) Tj
+T*
+(- Suspended organizations are blocked in requireAuth.) Tj
+T*
+() Tj
+T*
+(Issues:) Tj
+T*
+(- Lead productInterested is connected by item id without validating the item belongs to the same) Tj
+T*
+(organization.) Tj
+T*
+(- Prospect and quotation flows validate many related records correctly, but Lead item relation) Tj
+T*
+(is a gap.) Tj
+T*
+() Tj
+T*
+(Best-practice solution:) Tj
+T*
+(- Validate every foreign key relation with { id, organizationId, deletedAt: null } before) Tj
+T*
+(connecting it.) Tj
+T*
+(- Prefer composite constraints or service-level guards for cross-organization-sensitive) Tj
+T*
+(relations.) Tj
+T*
+() Tj
+T*
+(Subscription and Plan Restrictions) Tj
+T*
+() Tj
+T*
+(Observed:) Tj
+T*
+(- Writes in Users, Items, Leads, Prospects, and Quotations are blocked when a subscription is) Tj
+T*
+(read-only.) Tj
+T*
+(- Dashboard, Reports, Billing, Audit, notification feed, and announcement feed stay readable for) Tj
+T*
+(lapsed tenants.) Tj
+T*
+(- Feature toggles gate announcement authoring and audit-log access.) Tj
+T*
+() Tj
+T*
+(Issues:) Tj
+T*
+(- Subscription checks fail open when an organization has no subscription. This is documented as) Tj
+T*
+(a migration/backfill safety path, but it means a stranded Admin can continue writing.) Tj
+T*
+(- Quotation PDF is client-rendered, so the QUOTATION_PDF feature is effectively a UI gate.) Tj
+T*
+() Tj
+T*
+(Best-practice solution:) Tj
+T*
+(- Monitor and alert on SUBSCRIPTION_MISSING.) Tj
+T*
+(- Add a startup/backfill invariant that every active organization has a subscription.) Tj
+T*
+(- For premium client-rendered features, ensure no server-side asset/export endpoint can bypass) Tj
+T*
+(the plan.) Tj
+T*
+ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 6 0 R >>
+endobj
+8 0 obj
+<< /Length 2630 >>
+stream
+BT
+/F1 9.5 Tf
+50 748 Td
+12 TL
+() Tj
+T*
+(Audit Completeness) Tj
+T*
+() Tj
+T*
+(Observed:) Tj
+T*
+(- User create/update/delete/disable/enable, item create/update/delete, lead) Tj
+T*
+(create/update/status/delete/import/convert, quotation create/update/status/delete, and auth) Tj
+T*
+(profile/password events are audited.) Tj
+T*
+() Tj
+T*
+(Issues:) Tj
+T*
+(- Missing or weak audit coverage for Admin-relevant actions:) Tj
+T*
+(  - Lead assignment.) Tj
+T*
+(  - Item status toggle.) Tj
+T*
+(  - Prospect stage change.) Tj
+T*
+(  - Prospect follow-up update.) Tj
+T*
+(  - Prospect manual activity creation.) Tj
+T*
+(  - Prospect delete.) Tj
+T*
+(  - Profile image and organization PDF asset uploads.) Tj
+T*
+(  - Report CSV export.) Tj
+T*
+() Tj
+T*
+(Best-practice solution:) Tj
+T*
+(- Define an Admin audit event matrix.) Tj
+T*
+(- Record audit rows after successful business operations.) Tj
+T*
+(- Capture before/after snapshots for state changes, but never log secrets or full personal/file) Tj
+T*
+(data.) Tj
+T*
+() Tj
+T*
+(Module-Wise Admin Audit Report) Tj
+T*
+() Tj
+T*
+(1. Dashboard) Tj
+T*
+() Tj
+T*
+(Severity: Medium) Tj
+T*
+() Tj
+T*
+(Affected functionality:) Tj
+T*
+(- Admin KPI cards.) Tj
+T*
+(- Lead source/status charts.) Tj
+T*
+(- Lead and sales trends.) Tj
+T*
+(- Manager and executive performance tables.) Tj
+T*
+(- Dark mode chart readability.) Tj
+T*
+() Tj
+T*
+(Bugs/issues found:) Tj
+T*
+(- Lost Leads counts only leads with status UNQUALIFIED. Lost prospects \(Prospect.stage === LOST\)) Tj
+T*
+(are not included, so the KPI can understate lost pipeline.) Tj
+T*
+(- Conversion Rate % is calculated as prospects divided by total leads. This is a) Tj
+T*
+(lead-to-prospect conversion rate, not customer conversion or sales conversion.) Tj
+T*
+(- Follow-up due and overdue calculations compare a Date column and a string followUpTime using) Tj
+T*
+(the server timezone, which can misclassify today/overdue around timezone boundaries.) Tj
+T*
+(- Team performance includes only active managers/executives. Historical work from inactive users) Tj
+T*
+(disappears from current dashboard performance.) Tj
+T*
+(- Lead and quotation trend data is fetched into memory and bucketed in JavaScript.) Tj
+T*
+(- Chart axes use hard-coded black tick colors in Admin dashboard charts, which can be hard to) Tj
+T*
+(read in dark mode.) Tj
+T*
+() Tj
+T*
+(Possible root cause:) Tj
+T*
+(- KPI names do not fully encode business definitions.) Tj
+T*
+(- Trend and performance logic was optimized for fast delivery, not large datasets.) Tj
+T*
+(- Frontend chart styling bypasses theme tokens.) Tj
+T*
+() Tj
+T*
+(Best-practice solution:) Tj
+T*
+(- Rename KPIs or update calculations:) Tj
+T*
+ET
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 8 0 R >>
+endobj
+10 0 obj
+<< /Length 3095 >>
+stream
+BT
+/F1 9.5 Tf
+50 748 Td
+12 TL
+(  - Lost Leads should either stay direct lost leads or become Lost Pipeline and include lost) Tj
+T*
+(prospects.) Tj
+T*
+(  - Conversion Rate should be named Lead to Prospect Rate.) Tj
+T*
+(- Move trend aggregation into database queries or materialized summary tables.) Tj
+T*
+(- Store follow-up date/time as a single timezone-aware timestamp or normalize by organization) Tj
+T*
+(timezone.) Tj
+T*
+(- Use theme-aware chart tokens for axis labels and grid colors.) Tj
+T*
+() Tj
+T*
+(Performance improvement suggestions:) Tj
+T*
+(- Use database groupBy or raw SQL date bucketing for trends.) Tj
+T*
+(- Cache dashboard stats for a short period per organization.) Tj
+T*
+(- Keep inactive users in historical performance with an Inactive badge.) Tj
+T*
+() Tj
+T*
+(Edge cases to test:) Tj
+T*
+(- Organization with no leads, no prospects, and no quotations.) Tj
+T*
+(- Leads converted to prospects, then prospect marked LOST.) Tj
+T*
+(- Admin timezone different from server timezone.) Tj
+T*
+(- Follow-up today with null time, past time, and future time.) Tj
+T*
+(- Inactive executive with historical won customers and approved quotations.) Tj
+T*
+() Tj
+T*
+(Testing checklist:) Tj
+T*
+(- Verify all KPI numbers against direct database counts.) Tj
+T*
+(- Verify lost pipeline definition with both UNQUALIFIED leads and LOST prospects.) Tj
+T*
+(- Verify conversion rate label and formula.) Tj
+T*
+(- Verify follow-up due/overdue around midnight.) Tj
+T*
+(- Verify dashboard in dark and light mode.) Tj
+T*
+(- Verify dashboard with large lead/quotation volumes.) Tj
+T*
+() Tj
+T*
+(2. Notifications) Tj
+T*
+() Tj
+T*
+(Severity: Low to Medium) Tj
+T*
+() Tj
+T*
+(Affected functionality:) Tj
+T*
+(- Notification page.) Tj
+T*
+(- Notification bell/unread count.) Tj
+T*
+(- Announcement visibility in Admin feed.) Tj
+T*
+(- Mark all read behavior.) Tj
+T*
+() Tj
+T*
+(Bugs/issues found:) Tj
+T*
+(- Per-user notifications are correctly scoped by userId.) Tj
+T*
+(- Announcement feed visibility is handled separately and supports role/org targeting.) Tj
+T*
+(- Notification mark all read updates only one bounded batch of 200. Announcement mark all read) Tj
+T*
+(loops until cleared, but notification mark all read can leave unread items when a user has more) Tj
+T*
+(than 200.) Tj
+T*
+(- Notifications page passes loading={announcementsLoading && notificationsLoading}. If only one) Tj
+T*
+(source is loading, the UI may show partial or stale content instead of a loading state.) Tj
+T*
+(- The full notifications page loads a bounded notification feed, not true paginated history.) Tj
+T*
+() Tj
+T*
+(Possible root cause:) Tj
+T*
+(- Notification feed was designed as a lightweight bell feed and reused on the full page.) Tj
+T*
+(- Announcement and notification read models evolved differently.) Tj
+T*
+() Tj
+T*
+(Best-practice solution:) Tj
+T*
+(- Make notification mark all read loop like announcements or rename the action to Mark latest) Tj
+T*
+(read.) Tj
+T*
+(- Use announcementsLoading || notificationsLoading where full-feed loading matters.) Tj
+T*
+(- Add pagination or infinite scroll for notification history.) Tj
+T*
+() Tj
+T*
+ET
+endstream
+endobj
+11 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 10 0 R >>
+endobj
+12 0 obj
+<< /Length 2946 >>
+stream
+BT
+/F1 9.5 Tf
+50 748 Td
+12 TL
+(Performance improvement suggestions:) Tj
+T*
+(- Index notification queries by \(userId, readAt, createdAt\).) Tj
+T*
+(- Keep unread counts cheap with count queries or cached counters if volume grows.) Tj
+T*
+() Tj
+T*
+(Edge cases to test:) Tj
+T*
+(- Admin with 201 unread notifications.) Tj
+T*
+(- Announcement unread count plus notification unread count.) Tj
+T*
+(- Dismissible vs non-dismissible announcements.) Tj
+T*
+(- Lapsed subscription Admin still reading notification/billing warnings.) Tj
+T*
+(- Announcement targeted to Admin role only.) Tj
+T*
+() Tj
+T*
+(Testing checklist:) Tj
+T*
+(- Verify Admin sees only own notifications.) Tj
+T*
+(- Verify Admin sees platform announcements targeted to their organization or role.) Tj
+T*
+(- Verify Admin sees organization announcements from their own org only.) Tj
+T*
+(- Verify mark all read clears all unread rows.) Tj
+T*
+(- Verify loading, empty, unread-only, and delete states.) Tj
+T*
+(- Verify mobile notification cards.) Tj
+T*
+() Tj
+T*
+(3. Users) Tj
+T*
+() Tj
+T*
+(Severity: Medium) Tj
+T*
+() Tj
+T*
+(Affected functionality:) Tj
+T*
+(- Manager and Executive creation.) Tj
+T*
+(- User list stats.) Tj
+T*
+(- Role assignment.) Tj
+T*
+(- Seat limits.) Tj
+T*
+(- Disable, enable, delete.) Tj
+T*
+() Tj
+T*
+(Bugs/issues found:) Tj
+T*
+(- Admin can create only Manager and Executive users, which is correct.) Tj
+T*
+(- Seat checks run on create and enable, which is correct.) Tj
+T*
+(- UsersStats calls useUsers\(\) without pagination params and counts only the returned page. With) Tj
+T*
+(more than 10 users, Admin stat cards are wrong.) Tj
+T*
+(- Frontend requires mobile and joiningDate, but backend makes them optional. This creates) Tj
+T*
+(inconsistent policy between UI and API.) Tj
+T*
+(- Soft-deleted user email cannot be reused because User.email is globally unique. The service) Tj
+T*
+(pre-check only checks active users, then the database unique constraint throws later.) Tj
+T*
+(- User filter limit has no maximum.) Tj
+T*
+(- Help content says Admin can reset passwords, but backend restricts reset-password to Super) Tj
+T*
+(Admin.) Tj
+T*
+() Tj
+T*
+(Possible root cause:) Tj
+T*
+(- Stats are derived from list response instead of aggregate endpoints.) Tj
+T*
+(- Form schema diverged from shared backend schema.) Tj
+T*
+(- Soft delete and global unique email policy were not made explicit in UX.) Tj
+T*
+() Tj
+T*
+(Best-practice solution:) Tj
+T*
+(- Add a /users/stats endpoint or use filtered count calls by role/status.) Tj
+T*
+(- Align frontend and backend validation for mobile/joining date.) Tj
+T*
+(- Show a clear message when an email belongs to a deleted user and cannot be reused.) Tj
+T*
+(- Add limit.max\(100\) to user filters.) Tj
+T*
+() Tj
+T*
+(Performance improvement suggestions:) Tj
+T*
+(- Use database counts for user stats.) Tj
+T*
+(- Avoid loading full/capped user lists for aggregate cards.) Tj
+T*
+(- Add indexes for common org/role/status search if not already present.) Tj
+T*
+ET
+endstream
+endobj
+13 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 12 0 R >>
+endobj
+14 0 obj
+<< /Length 2651 >>
+stream
+BT
+/F1 9.5 Tf
+50 748 Td
+12 TL
+() Tj
+T*
+(Edge cases to test:) Tj
+T*
+(- Admin creates Manager.) Tj
+T*
+(- Admin creates Executive with and without manager.) Tj
+T*
+(- Admin attempts to create Admin.) Tj
+T*
+(- Admin disables an Executive with active sessions.) Tj
+T*
+(- Admin enables user when plan seat limit is reached.) Tj
+T*
+(- Admin tries duplicate email from active and soft-deleted user.) Tj
+T*
+() Tj
+T*
+(Testing checklist:) Tj
+T*
+(- Verify Admin cannot create Admin or Super Admin.) Tj
+T*
+(- Verify Manager can only create Executive.) Tj
+T*
+(- Verify self-disable/self-delete blocked.) Tj
+T*
+(- Verify seat limit on create and enable.) Tj
+T*
+(- Verify pagination/search/filter with more than one page.) Tj
+T*
+(- Verify mobile form validation matches API validation.) Tj
+T*
+(- Verify audit rows for create/update/disable/enable/delete.) Tj
+T*
+() Tj
+T*
+(4. Items) Tj
+T*
+() Tj
+T*
+(Severity: Medium) Tj
+T*
+() Tj
+T*
+(Affected functionality:) Tj
+T*
+(- Item catalogue.) Tj
+T*
+(- Quotation line items.) Tj
+T*
+(- Lead product interest.) Tj
+T*
+(- Item stats.) Tj
+T*
+(- Item status toggle.) Tj
+T*
+() Tj
+T*
+(Bugs/issues found:) Tj
+T*
+(- Item create/update/delete are audited, but item status toggle is not audited.) Tj
+T*
+(- Item filter limit has no maximum.) Tj
+T*
+(- ItemsStats loads limit: 1000 and counts client-side. This is heavy and becomes inaccurate) Tj
+T*
+(above 1000 items.) Tj
+T*
+(- Item price and GST rate are stored as Float; quotation totals use Decimal later, but catalogue) Tj
+T*
+(pricing can still carry floating precision risk.) Tj
+T*
+(- The service relies on database uniqueness for item code conflicts. The schema comment suggests) Tj
+T*
+(an active-only uniqueness intent; verify the migration actually enforces active item code) Tj
+T*
+(uniqueness per organization.) Tj
+T*
+() Tj
+T*
+(Possible root cause:) Tj
+T*
+(- Toggle was added as a convenience path but not included in audit matrix.) Tj
+T*
+(- Stats were built from list data instead of aggregate queries.) Tj
+T*
+() Tj
+T*
+(Best-practice solution:) Tj
+T*
+(- Add an audit row for ITEM_STATUS_CHANGED.) Tj
+T*
+(- Add true item aggregate stats endpoint.) Tj
+T*
+(- Add limit.max\(100\) or limit.max\(500\) to item filters.) Tj
+T*
+(- Store money-like fields as Decimal where possible.) Tj
+T*
+(- Confirm partial unique index for active item codes.) Tj
+T*
+() Tj
+T*
+(Performance improvement suggestions:) Tj
+T*
+(- Use DB counts by status/type.) Tj
+T*
+(- Keep quotation item lookup limited to active items with compact select fields.) Tj
+T*
+(- Add indexes for item search fields if catalogue grows.) Tj
+T*
+() Tj
+T*
+(Edge cases to test:) Tj
+T*
+(- Duplicate item code in same organization.) Tj
+T*
+ET
+endstream
+endobj
+15 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 14 0 R >>
+endobj
+16 0 obj
+<< /Length 3022 >>
+stream
+BT
+/F1 9.5 Tf
+50 748 Td
+12 TL
+(- Duplicate item code across organizations.) Tj
+T*
+(- Soft-deleted item code reuse.) Tj
+T*
+(- Inactive item used in existing quotation.) Tj
+T*
+(- Active item toggled inactive and then used in a new quotation.) Tj
+T*
+(- Large item catalogue.) Tj
+T*
+() Tj
+T*
+(Testing checklist:) Tj
+T*
+(- Verify item CRUD is org-scoped.) Tj
+T*
+(- Verify inactive/deleted items cannot be used in new quotations.) Tj
+T*
+(- Verify item status toggle creates audit log after fix.) Tj
+T*
+(- Verify item stats above 1000 records.) Tj
+T*
+(- Verify dark/light mode table and mobile cards.) Tj
+T*
+() Tj
+T*
+(5. Leads) Tj
+T*
+() Tj
+T*
+(Severity: Critical) Tj
+T*
+() Tj
+T*
+(Affected functionality:) Tj
+T*
+(- Lead creation.) Tj
+T*
+(- Lead assignment.) Tj
+T*
+(- Lead status flow.) Tj
+T*
+(- Qualified lead to prospect conversion.) Tj
+T*
+(- Lead deletion.) Tj
+T*
+(- Organization data isolation.) Tj
+T*
+() Tj
+T*
+(Bugs/issues found:) Tj
+T*
+(- productInterested / productInterestId is connected directly to Item by id. The backend does) Tj
+T*
+(not verify that the item belongs to the Admin's organization. A crafted request can link a lead) Tj
+T*
+(to another organization's item.) Tj
+T*
+(- Admin can delete converted leads. The update path prevents editing a converted lead at) Tj
+T*
+(repository level, but the delete path only soft-deletes the lead and does not block converted) Tj
+T*
+(lineage.) Tj
+T*
+(- Lead assignment is not audited.) Tj
+T*
+(- The quick status flow changes status to QUALIFIED and then separately calls conversion. If) Tj
+T*
+(conversion fails because of plan limit or validation, the lead remains qualified but not) Tj
+T*
+(converted.) Tj
+T*
+(- Lead profile image upload runs before validation. Invalid form data with a valid file can) Tj
+T*
+(leave orphan upload files.) Tj
+T*
+(- Lead filter limit has no maximum.) Tj
+T*
+(- Individual lead create does not appear to enforce duplicate email/mobile policy, while import) Tj
+T*
+(does. This creates inconsistent duplicate behavior.) Tj
+T*
+(- findLeadById used by business guards does not include prospect, so converted-lead checks) Tj
+T*
+(depend on later repository behavior and miss delete.) Tj
+T*
+() Tj
+T*
+(Possible root cause:) Tj
+T*
+(- Relationship validation was handled for assignees but not item relation.) Tj
+T*
+(- Converted lead immutability was implemented in update but not delete.) Tj
+T*
+(- UI workflow split qualification and conversion into two calls.) Tj
+T*
+() Tj
+T*
+(Best-practice solution:) Tj
+T*
+(- Validate productInterested with item.findFirst\({ id, organizationId, deletedAt: null, status:) Tj
+T*
+(ACTIVE }\) before connect.) Tj
+T*
+(- Block delete for any lead with a prospect, or convert lead delete into an archive policy that) Tj
+T*
+(preserves prospect/customer lineage.) Tj
+T*
+(- Add LEAD_ASSIGNED audit event with before/after assignee.) Tj
+T*
+(- Provide a single backend action for "qualify and convert" or make UI show a recoverable) Tj
+T*
+(intermediate state.) Tj
+T*
+(- Clean up uploaded files on validation/service failure.) Tj
+T*
+ET
+endstream
+endobj
+17 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 16 0 R >>
+endobj
+18 0 obj
+<< /Length 2982 >>
+stream
+BT
+/F1 9.5 Tf
+50 748 Td
+12 TL
+(- Add limit.max\(100\).) Tj
+T*
+(- Decide and document duplicate email/mobile policy.) Tj
+T*
+() Tj
+T*
+(Performance improvement suggestions:) Tj
+T*
+(- Add DB indexes for lead search fields if volume grows.) Tj
+T*
+(- Use aggregate endpoints for lead stats.) Tj
+T*
+(- Avoid unbounded list requests for exports/import validation.) Tj
+T*
+() Tj
+T*
+(Edge cases to test:) Tj
+T*
+(- Admin creates lead with item id from another organization.) Tj
+T*
+(- Admin deletes a converted lead that has a prospect/customer.) Tj
+T*
+(- Admin changes status to QUALIFIED when prospect limit is reached.) Tj
+T*
+(- Admin imports duplicate emails and then manually creates same duplicate.) Tj
+T*
+(- Lead image upload with invalid body.) Tj
+T*
+(- Assignment to inactive user or user from another organization.) Tj
+T*
+() Tj
+T*
+(Testing checklist:) Tj
+T*
+(- Verify lead CRUD is organization-scoped.) Tj
+T*
+(- Verify product interest cannot cross organization.) Tj
+T*
+(- Verify converted lead cannot be deleted.) Tj
+T*
+(- Verify assignment creates audit log after fix.) Tj
+T*
+(- Verify qualify-to-prospect flow is atomic or recoverable.) Tj
+T*
+(- Verify import respects plan limits and duplicates.) Tj
+T*
+(- Verify pagination, filters, empty states, and mobile view.) Tj
+T*
+() Tj
+T*
+(6. Prospects) Tj
+T*
+() Tj
+T*
+(Severity: Critical) Tj
+T*
+() Tj
+T*
+(Affected functionality:) Tj
+T*
+(- Prospect pipeline.) Tj
+T*
+(- Follow-ups.) Tj
+T*
+(- Stage changes.) Tj
+T*
+(- Customer derivation.) Tj
+T*
+(- Prospect activity history.) Tj
+T*
+() Tj
+T*
+(Bugs/issues found:) Tj
+T*
+(- deleteProspect hard-deletes the prospect and does not call assertEditableProspect. Admin can) Tj
+T*
+(delete WON or LOST prospects, including customer records.) Tj
+T*
+(- Prospect activities have onDelete: Cascade, so hard-deleting a prospect also deletes activity) Tj
+T*
+(history.) Tj
+T*
+(- Prospect stage change, follow-up update, activity creation, and delete are not audited.) Tj
+T*
+(- Follow-up overdue logic mixes date fields, string time, UTC date construction, and server) Tj
+T*
+(local hours. This can misclassify overdue status.) Tj
+T*
+(- ProspectsStats counts lost prospects from the current page only, while total prospects uses) Tj
+T*
+(meta.total.) Tj
+T*
+(- Prospect filter limit has no maximum.) Tj
+T*
+(- UpdateProspectSchema requires name, email, mobile, and company name. Leads can have optional) Tj
+T*
+(email/mobile/company; editing a prospect converted from incomplete lead data may force unrelated) Tj
+T*
+(missing fields.) Tj
+T*
+(- Quotation party picker loads prospects by lead status QUALIFIED, not by active prospect stage.) Tj
+T*
+(Terminal WON or LOST prospects can still appear if the lead remains qualified.) Tj
+T*
+() Tj
+T*
+(Possible root cause:) Tj
+T*
+(- Customer is modeled as a prospect stage, so delete rules need stronger terminal-state) Tj
+T*
+(handling.) Tj
+T*
+(- Activity/audit trail responsibilities are split.) Tj
+T*
+(- Form validation does not support partial prospect updates.) Tj
+T*
+ET
+endstream
+endobj
+19 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 18 0 R >>
+endobj
+20 0 obj
+<< /Length 3027 >>
+stream
+BT
+/F1 9.5 Tf
+50 748 Td
+12 TL
+() Tj
+T*
+(Best-practice solution:) Tj
+T*
+(- Remove hard delete from Admin UI/API or convert to soft delete with terminal-state protection.) Tj
+T*
+(- Block delete for WON and LOST, or require an explicit archive workflow with audit.) Tj
+T*
+(- Add audit rows for stage, follow-up, activity, and delete.) Tj
+T*
+(- Make prospect updates partial where business rules allow.) Tj
+T*
+(- Normalize follow-up datetime handling.) Tj
+T*
+(- Add aggregate stats for lost prospects.) Tj
+T*
+() Tj
+T*
+(Performance improvement suggestions:) Tj
+T*
+(- Add indexes for organization/stage/assigned/follow-up queries.) Tj
+T*
+(- Avoid returning activity history in list endpoints.) Tj
+T*
+(- Use database counts for prospect stat cards.) Tj
+T*
+() Tj
+T*
+(Edge cases to test:) Tj
+T*
+(- Delete WON prospect/customer.) Tj
+T*
+(- Delete prospect with quotations and activities.) Tj
+T*
+(- Update stage to WON and verify customer list.) Tj
+T*
+(- Update stage to LOST and verify dashboard/reports.) Tj
+T*
+(- Follow-up due around timezone boundaries.) Tj
+T*
+(- Prospect converted from lead missing email/mobile/company.) Tj
+T*
+() Tj
+T*
+(Testing checklist:) Tj
+T*
+(- Verify Admin sees all organization prospects only.) Tj
+T*
+(- Verify terminal prospects are read-only or protected.) Tj
+T*
+(- Verify stage change requires comment and writes audit row after fix.) Tj
+T*
+(- Verify follow-up creation, completion, and overdue counts.) Tj
+T*
+(- Verify manual activity clears follow-up only when intended.) Tj
+T*
+(- Verify lost prospect stats across multiple pages.) Tj
+T*
+(- Verify mobile and dark mode behavior.) Tj
+T*
+() Tj
+T*
+(7. Quotations) Tj
+T*
+() Tj
+T*
+(Severity: High) Tj
+T*
+() Tj
+T*
+(Affected functionality:) Tj
+T*
+(- Quotation stats.) Tj
+T*
+(- Quotation status flow.) Tj
+T*
+(- PDF preview.) Tj
+T*
+(- Prospect/customer conversion.) Tj
+T*
+(- Quotation form selection.) Tj
+T*
+() Tj
+T*
+(Bugs/issues found:) Tj
+T*
+(- In quotation.route.ts, GET /:id is registered before GET /stats. Express matches) Tj
+T*
+(/quotations/stats as id = "stats", so quotation stats are effectively unreachable. The frontend) Tj
+T*
+(then falls back to zero stats.) Tj
+T*
+(- Quick status dialog sends only { status }. Backend requires statusReason when rejecting, so) Tj
+T*
+(Admin cannot reject from the quick status dialog.) Tj
+T*
+(- Approving a quotation does not mark the linked prospect as WON. Since customers are derived) Tj
+T*
+(from won prospects, approved quotations do not automatically create customers.) Tj
+T*
+(- Quotation form loads only first 100 items and first 100 qualifying prospects. Large) Tj
+T*
+(organizations can have missing options.) Tj
+T*
+(- Quotation quick status changes omit expectedVersion, so concurrent status changes can) Tj
+T*
+(overwrite each other.) Tj
+T*
+(- Default reference prefix/suffix appears hardcoded in the form \(EBS/26 -, 2\) and is not) Tj
+T*
+(organization/year aware.) Tj
+T*
+(- Attachments are stored as base64 in quotation JSON. This is capped, but it increases DB size) Tj
+T*
+(and response payloads.) Tj
+T*
+ET
+endstream
+endobj
+21 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 20 0 R >>
+endobj
+22 0 obj
+<< /Length 2716 >>
+stream
+BT
+/F1 9.5 Tf
+50 748 Td
+12 TL
+(- PDF preview is client-rendered and gated by QUOTATION_PDF in the UI. If PDF generation remains) Tj
+T*
+(client-only, this is a UX gate rather than a strong server-side feature gate.) Tj
+T*
+() Tj
+T*
+(Possible root cause:) Tj
+T*
+(- Route ordering oversight.) Tj
+T*
+(- Backend status policy grew stricter than quick-action UI.) Tj
+T*
+(- Customer conversion rule is not encoded in quotation approval.) Tj
+T*
+(- Form options use fixed list limits.) Tj
+T*
+() Tj
+T*
+(Best-practice solution:) Tj
+T*
+(- Move /stats before /:id.) Tj
+T*
+(- Add rejection reason textarea when Admin selects REJECTED.) Tj
+T*
+(- Decide the business rule:) Tj
+T*
+(  - Approval automatically marks linked prospect WON, or) Tj
+T*
+(  - Admin must explicitly mark prospect won and UI should explain that approval alone does not) Tj
+T*
+(create customer.) Tj
+T*
+(- Paginate/search party and item selectors.) Tj
+T*
+(- Include expectedVersion in quick actions.) Tj
+T*
+(- Store large attachments in object storage and snapshot metadata in DB.) Tj
+T*
+() Tj
+T*
+(Performance improvement suggestions:) Tj
+T*
+(- Keep quotation list excludes heavy details, which is good.) Tj
+T*
+(- Add server-side searchable item/prospect selector endpoints.) Tj
+T*
+(- Use object storage for attachments and PDF assets.) Tj
+T*
+() Tj
+T*
+(Edge cases to test:) Tj
+T*
+(- /quotations/stats returns real counts.) Tj
+T*
+(- Reject quotation without reason.) Tj
+T*
+(- Approve quotation linked to prospect and verify customer behavior.) Tj
+T*
+(- Edit approved quotation.) Tj
+T*
+(- Return approved quotation to pending.) Tj
+T*
+(- Delete approved quotation.) Tj
+T*
+(- Create quotation with inactive/cross-org item id.) Tj
+T*
+(- Create quotation with more than 100 available items/prospects.) Tj
+T*
+() Tj
+T*
+(Testing checklist:) Tj
+T*
+(- Verify route order for stats.) Tj
+T*
+(- Verify status transition matrix.) Tj
+T*
+(- Verify rejection reason is required and usable in UI.) Tj
+T*
+(- Verify status history and audit row.) Tj
+T*
+(- Verify PDF preview includes logo, QR code, and signature.) Tj
+T*
+(- Verify quotation totals are recalculated by backend.) Tj
+T*
+(- Verify mobile form usability.) Tj
+T*
+() Tj
+T*
+(8. Customers) Tj
+T*
+() Tj
+T*
+(Severity: High) Tj
+T*
+() Tj
+T*
+(Affected functionality:) Tj
+T*
+(- Customer list.) Tj
+T*
+(- Customer stats.) Tj
+T*
+(- Customer conversion from prospect/quotation.) Tj
+T*
+(- Customer lifecycle.) Tj
+T*
+() Tj
+T*
+(Bugs/issues found:) Tj
+T*
+(- Customers are not a separate model. Customer list is prospects filtered to stage: WON.) Tj
+T*
+(- Approved quotation does not automatically create or update a customer.) Tj
+T*
+(- Deleting a converted lead can make a won prospect/customer count as inactive or disappear from) Tj
+T*
+ET
+endstream
+endobj
+23 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 22 0 R >>
+endobj
+24 0 obj
+<< /Length 2882 >>
+stream
+BT
+/F1 9.5 Tf
+50 748 Td
+12 TL
+(active customer metrics.) Tj
+T*
+(- Hard-deleting a won prospect removes the customer record and activity history.) Tj
+T*
+(- There is no explicit customer status/lifecycle outside prospect stage and linked lead deletion) Tj
+T*
+(status.) Tj
+T*
+() Tj
+T*
+(Possible root cause:) Tj
+T*
+(- The customer domain is currently represented as a terminal pipeline stage.) Tj
+T*
+(- Delete/archive rules were not strengthened after customer derivation was added.) Tj
+T*
+() Tj
+T*
+(Best-practice solution:) Tj
+T*
+(- Decide whether Customer should remain a derived view or become its own entity.) Tj
+T*
+(- If derived, block destructive operations on won prospects and converted leads.) Tj
+T*
+(- If separate, create customer records through a transaction when prospect becomes WON.) Tj
+T*
+(- Add customer lifecycle audit events.) Tj
+T*
+() Tj
+T*
+(Performance improvement suggestions:) Tj
+T*
+(- Keep customer stats as aggregate endpoint, not current-page counts.) Tj
+T*
+(- Add indexes for organizationId, stage, and lead deletion state.) Tj
+T*
+() Tj
+T*
+(Edge cases to test:) Tj
+T*
+(- Prospect moved to WON.) Tj
+T*
+(- Approved quotation for a prospect not yet won.) Tj
+T*
+(- Won prospect with deleted lead.) Tj
+T*
+(- Won prospect hard delete attempt.) Tj
+T*
+(- Customer stats with active and inactive linked leads.) Tj
+T*
+() Tj
+T*
+(Testing checklist:) Tj
+T*
+(- Verify customer list shows only organization WON prospects.) Tj
+T*
+(- Verify customer stats match direct database counts.) Tj
+T*
+(- Verify deleting converted leads/prospects is blocked after fix.) Tj
+T*
+(- Verify customer list pagination/search.) Tj
+T*
+(- Verify report and dashboard customer counts match customer module definition.) Tj
+T*
+() Tj
+T*
+(9. Reports) Tj
+T*
+() Tj
+T*
+(Severity: Medium to High) Tj
+T*
+() Tj
+T*
+(Affected functionality:) Tj
+T*
+(- Lead reports.) Tj
+T*
+(- Prospect reports.) Tj
+T*
+(- Quotation reports.) Tj
+T*
+(- Performance reports.) Tj
+T*
+(- CSV export.) Tj
+T*
+(- Filters and charts.) Tj
+T*
+() Tj
+T*
+(Bugs/issues found:) Tj
+T*
+(- Backend getReportsData returns summary, lead, prospect, quotation, and performance data for) Tj
+T*
+(every report request, even when UI renders one tab.) Tj
+T*
+(- Report limit has no maximum. Export forces limit: 10000, so larger exports are silently) Tj
+T*
+(truncated.) Tj
+T*
+(- The global Lead Source filter only affects lead reports. Prospect, quotation, performance, and) Tj
+T*
+(summary calculations do not consistently use it.) Tj
+T*
+(- Performance reports compute follow-up metrics by loading follow-up activities and filtering) Tj
+T*
+(metadata in JavaScript.) Tj
+T*
+(- Performance reports include only active users, so inactive users disappear from historical) Tj
+T*
+(performance.) Tj
+T*
+(- activityFilters is computed but not used in the performance activity query.) Tj
+T*
+(- Custom date filters do not validate from <= to in report schema.) Tj
+T*
+ET
+endstream
+endobj
+25 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 24 0 R >>
+endobj
+26 0 obj
+<< /Length 2938 >>
+stream
+BT
+/F1 9.5 Tf
+50 748 Td
+12 TL
+(- CSV export is logged but not audited.) Tj
+T*
+(- Date ranges use UTC boundaries, which may not match organization-local reporting expectations.) Tj
+T*
+() Tj
+T*
+(Possible root cause:) Tj
+T*
+(- Unified reporting endpoint was built for simplicity.) Tj
+T*
+(- Filters were added generically in UI before each report type implemented them.) Tj
+T*
+(- Follow-up completion is stored in activity metadata, not a query-friendly column.) Tj
+T*
+() Tj
+T*
+(Best-practice solution:) Tj
+T*
+(- Split reports by endpoint or add a type parameter so the backend computes only the active tab.) Tj
+T*
+(- Add limit.max\(100\) for UI and a dedicated export job/streaming export for large data.) Tj
+T*
+(- Make filters tab-aware, or apply source/date/user filters consistently.) Tj
+T*
+(- Store follow-up completion state in structured columns or a reporting table.) Tj
+T*
+(- Add audit rows for exports.) Tj
+T*
+() Tj
+T*
+(Performance improvement suggestions:) Tj
+T*
+(- Use DB aggregation for source, stage, status, revenue, and performance metrics.) Tj
+T*
+(- Avoid findMany for large trend datasets where groupBy or raw SQL bucketing fits.) Tj
+T*
+(- Stream CSV or generate exports asynchronously for large organizations.) Tj
+T*
+() Tj
+T*
+(Edge cases to test:) Tj
+T*
+(- Export more than 10,000 leads.) Tj
+T*
+(- from date after to date.) Tj
+T*
+(- Source filter on prospect and quotation tabs.) Tj
+T*
+(- Inactive executive with historical leads and quotations.) Tj
+T*
+(- Reports around timezone midnight.) Tj
+T*
+(- Large prospect activity table.) Tj
+T*
+() Tj
+T*
+(Testing checklist:) Tj
+T*
+(- Verify each report count against direct DB queries.) Tj
+T*
+(- Verify filters apply as displayed.) Tj
+T*
+(- Verify CSV exports match filtered data and row count.) Tj
+T*
+(- Verify export creates audit row after fix.) Tj
+T*
+(- Verify charts render in dark and light mode.) Tj
+T*
+(- Verify mobile report tabs and filters.) Tj
+T*
+() Tj
+T*
+(10. Profile) Tj
+T*
+() Tj
+T*
+(Severity: High) Tj
+T*
+() Tj
+T*
+(Affected functionality:) Tj
+T*
+(- Admin profile update.) Tj
+T*
+(- Password change.) Tj
+T*
+(- Profile photo upload.) Tj
+T*
+(- Quotation PDF asset upload.) Tj
+T*
+() Tj
+T*
+(Bugs/issues found:) Tj
+T*
+(- Backend accepts companyLogo, qrCode, and signature files from any authenticated organization) Tj
+T*
+(user. The UI hides PDF assets from some roles, but the API does not enforce the same role) Tj
+T*
+(policy.) Tj
+T*
+(- Profile and organization asset uploads run before validation, so invalid requests can leave) Tj
+T*
+(orphan files.) Tj
+T*
+(- Old profile images and old organization PDF assets are not deleted when replaced.) Tj
+T*
+(- Profile audit logs capture body field names but not uploaded asset field names.) Tj
+T*
+(- Frontend hides change-password from Manager/Executive, but backend allows any authenticated) Tj
+T*
+(user to change own password. This may be intended, but UI and API policy differ.) Tj
+T*
+() Tj
+T*
+(Possible root cause:) Tj
+T*
+ET
+endstream
+endobj
+27 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 26 0 R >>
+endobj
+28 0 obj
+<< /Length 2915 >>
+stream
+BT
+/F1 9.5 Tf
+50 748 Td
+12 TL
+(- File field support was added to a general profile endpoint without a backend role gate per) Tj
+T*
+(file type.) Tj
+T*
+(- Storage cleanup was not added around validation/service failures.) Tj
+T*
+() Tj
+T*
+(Best-practice solution:) Tj
+T*
+(- Add backend role checks for organization asset fields. If policy is Admin-only, enforce) Tj
+T*
+(Admin-only. If Manager is allowed, explicitly allow Admin/Manager.) Tj
+T*
+(- Clean up uploaded files when validation or service update fails.) Tj
+T*
+(- Delete or archive previous asset files on successful replacement.) Tj
+T*
+(- Include asset field names in audit metadata.) Tj
+T*
+(- Align password-change UI and API policy.) Tj
+T*
+() Tj
+T*
+(Performance improvement suggestions:) Tj
+T*
+(- Store uploaded assets with deterministic paths or object storage keys.) Tj
+T*
+(- Use image optimization/resizing for profile and PDF assets.) Tj
+T*
+() Tj
+T*
+(Edge cases to test:) Tj
+T*
+(- Executive crafts profile request with companyLogo.) Tj
+T*
+(- Admin uploads invalid file type.) Tj
+T*
+(- Admin uploads valid file with invalid first name.) Tj
+T*
+(- Admin replaces logo multiple times.) Tj
+T*
+(- Admin changes password and old sessions are invalidated.) Tj
+T*
+(- Dark/light mode profile layout.) Tj
+T*
+() Tj
+T*
+(Testing checklist:) Tj
+T*
+(- Verify profile fields update correctly.) Tj
+T*
+(- Verify password change requires current password.) Tj
+T*
+(- Verify organization asset upload is role-gated on backend.) Tj
+T*
+(- Verify old files are cleaned up after replacement.) Tj
+T*
+(- Verify audit rows include profile image/assets after fix.) Tj
+T*
+(- Verify mobile profile layout.) Tj
+T*
+() Tj
+T*
+(11. Settings) Tj
+T*
+() Tj
+T*
+(Severity: Medium) Tj
+T*
+() Tj
+T*
+(Affected functionality:) Tj
+T*
+(- Admin settings page.) Tj
+T*
+(- Billing/subscription read view.) Tj
+T*
+(- Plan restriction visibility.) Tj
+T*
+() Tj
+T*
+(Bugs/issues found:) Tj
+T*
+(- Settings currently contains only the Billing tab. The page description says organization plan) Tj
+T*
+(and preferences, but there are no actual organization preference controls.) Tj
+T*
+(- Tenant billing is read-only by design, which is appropriate for manual billing operations.) Tj
+T*
+(- No subscription is shown as an actionable state, but write gates fail open if the organization) Tj
+T*
+(truly has no subscription row. This can conflict with Admin expectations unless backfill is) Tj
+T*
+(guaranteed.) Tj
+T*
+(- Query-string tab persistence is good, but there is no actual settings persistence beyond) Tj
+T*
+(billing read state.) Tj
+T*
+() Tj
+T*
+(Possible root cause:) Tj
+T*
+(- Settings page is a placeholder container around Billing.) Tj
+T*
+(- Billing backfill safety path intentionally fails open.) Tj
+T*
+() Tj
+T*
+(Best-practice solution:) Tj
+T*
+(- Either rename Settings to Billing or add real organization settings.) Tj
+T*
+(- Add a system invariant that active organizations must have subscription rows.) Tj
+T*
+ET
+endstream
+endobj
+29 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 28 0 R >>
+endobj
+30 0 obj
+<< /Length 2572 >>
+stream
+BT
+/F1 9.5 Tf
+50 748 Td
+12 TL
+(- Keep Billing readable for lapsed tenants, but make write restrictions explicit in UI banners.) Tj
+T*
+() Tj
+T*
+(Performance improvement suggestions:) Tj
+T*
+(- Cache subscription status briefly.) Tj
+T*
+(- Keep usage counts aggregated and indexed.) Tj
+T*
+() Tj
+T*
+(Edge cases to test:) Tj
+T*
+(- Active subscription.) Tj
+T*
+(- Trialing subscription.) Tj
+T*
+(- Lapsed subscription after grace period.) Tj
+T*
+(- Organization with no subscription row.) Tj
+T*
+(- Feature toggle off for announcements/audit/PDF.) Tj
+T*
+(- Admin on mobile settings page.) Tj
+T*
+() Tj
+T*
+(Testing checklist:) Tj
+T*
+(- Verify Admin can read billing but cannot manage plan.) Tj
+T*
+(- Verify usage meters match actual counts.) Tj
+T*
+(- Verify lapsed subscription blocks writes in tenant modules.) Tj
+T*
+(- Verify dashboard/reports/billing remain readable when lapsed.) Tj
+T*
+(- Verify Settings tab query param persists.) Tj
+T*
+() Tj
+T*
+(12. Help) Tj
+T*
+() Tj
+T*
+(Severity: Low) Tj
+T*
+() Tj
+T*
+(Affected functionality:) Tj
+T*
+(- Admin self-help.) Tj
+T*
+(- Role-specific FAQ.) Tj
+T*
+(- Support contact usefulness.) Tj
+T*
+() Tj
+T*
+(Bugs/issues found:) Tj
+T*
+(- Admin FAQ says Admin can reset a user's password, but backend allows only Super Admin password) Tj
+T*
+(reset.) Tj
+T*
+(- Executive FAQ references lead statuses like Won, Lost, In Progress, and Dead, which do not) Tj
+T*
+(match current lead statuses.) Tj
+T*
+(- Help search checks only FAQ questions, not answers.) Tj
+T*
+(- Action cards have pointer styling but no click handlers or destinations.) Tj
+T*
+(- Support email and emergency contact are placeholder values.) Tj
+T*
+(- Help content is not aware of plan restrictions or disabled features.) Tj
+T*
+() Tj
+T*
+(Possible root cause:) Tj
+T*
+(- Help content is static and has not been updated with the current role/permission model.) Tj
+T*
+() Tj
+T*
+(Best-practice solution:) Tj
+T*
+(- Update FAQs from the actual role matrix and workflow names.) Tj
+T*
+(- Make action cards link to docs, support email, or ticket creation.) Tj
+T*
+(- Search both question and answer.) Tj
+T*
+(- Add Admin-specific guidance for subscription limits, quotation approval, customer conversion,) Tj
+T*
+(and PDF assets.) Tj
+T*
+() Tj
+T*
+(Performance improvement suggestions:) Tj
+T*
+(- Static content is fine for current scale.) Tj
+T*
+(- If content grows, move to structured searchable content.) Tj
+T*
+() Tj
+T*
+(Edge cases to test:) Tj
+T*
+(- Admin searches for "password".) Tj
+T*
+(- Admin searches for "quotation".) Tj
+T*
+(- Admin clicks User Guide, Contact Administrator, Submit Ticket.) Tj
+T*
+ET
+endstream
+endobj
+31 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 30 0 R >>
+endobj
+32 0 obj
+<< /Length 2869 >>
+stream
+BT
+/F1 9.5 Tf
+50 748 Td
+12 TL
+(- Help on mobile.) Tj
+T*
+(- Help in dark mode.) Tj
+T*
+() Tj
+T*
+(Testing checklist:) Tj
+T*
+(- Verify Admin FAQ contains only actions Admin can perform.) Tj
+T*
+(- Verify status names match enums.) Tj
+T*
+(- Verify support links work.) Tj
+T*
+(- Verify search returns answers.) Tj
+T*
+(- Verify empty search state.) Tj
+T*
+() Tj
+T*
+(Improvement Roadmap) Tj
+T*
+() Tj
+T*
+(Phase 0: Critical Data Integrity and Security) Tj
+T*
+() Tj
+T*
+(1. Block deletion of converted leads.) Tj
+T*
+(2. Remove or soft-protect prospect delete, especially for WON and LOST.) Tj
+T*
+(3. Validate lead productInterested item id against the Admin organization.) Tj
+T*
+(4. Add backend role checks for organization PDF asset uploads.) Tj
+T*
+(5. Fix quotation route order so /quotations/stats is declared before /:id.) Tj
+T*
+(6. Add rejection reason UI for quotation reject.) Tj
+T*
+() Tj
+T*
+(Phase 1: Audit and Workflow Correctness) Tj
+T*
+() Tj
+T*
+(1. Add audit events for lead assignment, item status toggle, prospect) Tj
+T*
+(stage/follow-up/activity/delete, profile assets, and report exports.) Tj
+T*
+(2. Decide customer conversion policy:) Tj
+T*
+(   - quotation approval automatically marks prospect WON, or) Tj
+T*
+(   - prospect WON remains explicit and UI explains it.) Tj
+T*
+(3. Make dashboard KPI definitions explicit and consistent with reports/customers.) Tj
+T*
+(4. Align frontend and backend validation for users, prospects, and profile.) Tj
+T*
+(5. Add route/API tests for Admin role permissions and cross-organization attempts.) Tj
+T*
+() Tj
+T*
+(Phase 2: Data Accuracy and Scale) Tj
+T*
+() Tj
+T*
+(1. Add aggregate stats endpoints for Users, Items, and Prospects.) Tj
+T*
+(2. Add maximum limits to list filters across users/items/leads/prospects/reports.) Tj
+T*
+(3. Split Reports endpoints by active tab or type.) Tj
+T*
+(4. Move dashboard/report trend aggregation into database queries or summary tables.) Tj
+T*
+(5. Normalize follow-up date/time handling with organization timezone.) Tj
+T*
+() Tj
+T*
+(Phase 3: UX, Responsiveness, and Dark Mode) Tj
+T*
+() Tj
+T*
+(1. Fix Admin dashboard chart axis colors in dark mode.) Tj
+T*
+(2. Improve quotation form mobile ergonomics and searchable item/prospect selectors.) Tj
+T*
+(3. Add clear empty/loading/error states for partial feed loading.) Tj
+T*
+(4. Replace placeholder Help content and wire Help action cards.) Tj
+T*
+(5. Clarify Settings vs Billing naming.) Tj
+T*
+() Tj
+T*
+(Phase 4: Operational Hardening) Tj
+T*
+() Tj
+T*
+(1. Add monitoring for SUBSCRIPTION_MISSING.) Tj
+T*
+(2. Add cleanup for orphaned uploads and replaced assets.) Tj
+T*
+(3. Move large quotation attachments to object storage.) Tj
+T*
+(4. Add export audit and async/streamed export for large datasets.) Tj
+T*
+(5. Maintain a regression checklist for Admin, then repeat audit for Manager access.) Tj
+T*
+() Tj
+T*
+(Module-Wise Testing Checklist) Tj
+T*
+() Tj
+T*
+ET
+endstream
+endobj
+33 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 32 0 R >>
+endobj
+34 0 obj
+<< /Length 2435 >>
+stream
+BT
+/F1 9.5 Tf
+50 748 Td
+12 TL
+(Dashboard) Tj
+T*
+(- Confirm Admin dashboard is only available to Admin role.) Tj
+T*
+(- Compare each KPI with direct database query.) Tj
+T*
+(- Test empty organization.) Tj
+T*
+(- Test lost leads vs lost prospects.) Tj
+T*
+(- Test timezone-sensitive follow-ups.) Tj
+T*
+(- Test dark and light mode charts.) Tj
+T*
+(- Test large organization data.) Tj
+T*
+() Tj
+T*
+(Notifications) Tj
+T*
+(- Verify Admin sees only own notifications.) Tj
+T*
+(- Verify targeted announcement visibility by org and role.) Tj
+T*
+(- Verify unread count merges notifications and announcements.) Tj
+T*
+(- Verify mark all read clears more than 200 notifications after fix.) Tj
+T*
+(- Verify loading and empty states.) Tj
+T*
+(- Verify mobile feed rendering.) Tj
+T*
+() Tj
+T*
+(Users) Tj
+T*
+(- Create Manager and Executive as Admin.) Tj
+T*
+(- Attempt to create Admin as Admin.) Tj
+T*
+(- Disable, enable, and delete Manager/Executive.) Tj
+T*
+(- Attempt self-disable and self-delete.) Tj
+T*
+(- Hit seat limits on create and enable.) Tj
+T*
+(- Validate stats with more than 10 users.) Tj
+T*
+(- Verify audit rows.) Tj
+T*
+() Tj
+T*
+(Items) Tj
+T*
+(- Create goods and services with required HSN/SAC.) Tj
+T*
+(- Test duplicate item code policy.) Tj
+T*
+(- Toggle item status and verify audit after fix.) Tj
+T*
+(- Use inactive/deleted item in quotation attempt.) Tj
+T*
+(- Validate stats above 1000 items.) Tj
+T*
+(- Test mobile table cards.) Tj
+T*
+() Tj
+T*
+(Leads) Tj
+T*
+(- Create lead with valid organization item.) Tj
+T*
+(- Attempt to create lead with another organization's item id.) Tj
+T*
+(- Assign lead and verify audit after fix.) Tj
+T*
+(- Change status through every allowed value.) Tj
+T*
+(- Qualify and convert with prospect limit reached.) Tj
+T*
+(- Attempt delete of converted lead.) Tj
+T*
+(- Import duplicates and over-plan rows.) Tj
+T*
+(- Upload invalid lead photo request and verify cleanup after fix.) Tj
+T*
+() Tj
+T*
+(Prospects) Tj
+T*
+(- Convert qualified lead.) Tj
+T*
+(- Attempt conversion of non-qualified lead.) Tj
+T*
+(- Update stage with comment.) Tj
+T*
+(- Update follow-up date/time/type.) Tj
+T*
+(- Add call/email/meeting activity.) Tj
+T*
+(- Attempt delete of WON and LOST prospects.) Tj
+T*
+(- Verify lost stats across pages.) Tj
+T*
+(- Verify customer derivation from WON.) Tj
+T*
+() Tj
+T*
+(Quotations) Tj
+T*
+(- Verify /quotations/stats.) Tj
+T*
+(- Create quotation with valid active item.) Tj
+T*
+(- Attempt cross-org/inactive item.) Tj
+T*
+ET
+endstream
+endobj
+35 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 34 0 R >>
+endobj
+36 0 obj
+<< /Length 2117 >>
+stream
+BT
+/F1 9.5 Tf
+50 748 Td
+12 TL
+(- Preview PDF with logo, QR, signature.) Tj
+T*
+(- Reject with reason.) Tj
+T*
+(- Attempt reject without reason.) Tj
+T*
+(- Approve quotation and verify customer rule.) Tj
+T*
+(- Edit approved quotation.) Tj
+T*
+(- Test concurrent update with expectedVersion.) Tj
+T*
+(- Test more than 100 items/prospects in selector.) Tj
+T*
+() Tj
+T*
+(Customers) Tj
+T*
+(- Move prospect to WON.) Tj
+T*
+(- Verify customer list and stats.) Tj
+T*
+(- Test won prospect with deleted lead.) Tj
+T*
+(- Attempt destructive operations on customer source records.) Tj
+T*
+(- Verify dashboard/report/customer count consistency.) Tj
+T*
+(- Test pagination and mobile cards.) Tj
+T*
+() Tj
+T*
+(Reports) Tj
+T*
+(- Test each tab with same date range.) Tj
+T*
+(- Validate source filter behavior per tab.) Tj
+T*
+(- Export CSV and verify row count.) Tj
+T*
+(- Export more than 10,000 rows after fix.) Tj
+T*
+(- Test inactive users in historical performance.) Tj
+T*
+(- Test date range from greater than to.) Tj
+T*
+(- Verify export audit after fix.) Tj
+T*
+() Tj
+T*
+(Profile) Tj
+T*
+(- Update Admin first name, last name, and mobile.) Tj
+T*
+(- Change password and verify session invalidation.) Tj
+T*
+(- Upload profile image.) Tj
+T*
+(- Upload quotation PDF assets as Admin.) Tj
+T*
+(- Attempt PDF asset upload as Executive through API.) Tj
+T*
+(- Replace assets and verify old file cleanup after fix.) Tj
+T*
+(- Verify audit fields for asset uploads after fix.) Tj
+T*
+() Tj
+T*
+(Settings) Tj
+T*
+(- Read billing on active plan.) Tj
+T*
+(- Read billing on trialing plan.) Tj
+T*
+(- Read billing on lapsed plan.) Tj
+T*
+(- Verify writes blocked when subscription is read-only.) Tj
+T*
+(- Test org with no subscription row and monitor fail-open path.) Tj
+T*
+(- Verify feature toggles affect announcements, audit log, and PDF UI.) Tj
+T*
+() Tj
+T*
+(Help) Tj
+T*
+(- Search Admin FAQs by question and answer after fix.) Tj
+T*
+(- Verify all Admin help actions match real permissions.) Tj
+T*
+(- Verify action cards navigate or perform useful actions.) Tj
+T*
+(- Verify support contacts are real.) Tj
+T*
+(- Verify mobile and dark mode.) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+ET
+endstream
+endobj
+37 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents 36 0 R >>
+endobj
+xref
+0 38
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000226 00000 n 
+0000000294 00000 n 
+0000003735 00000 n 
+0000003861 00000 n 
+0000006994 00000 n 
+0000007120 00000 n 
+0000009802 00000 n 
+0000009928 00000 n 
+0000013076 00000 n 
+0000013204 00000 n 
+0000016203 00000 n 
+0000016331 00000 n 
+0000019035 00000 n 
+0000019163 00000 n 
+0000022238 00000 n 
+0000022366 00000 n 
+0000025401 00000 n 
+0000025529 00000 n 
+0000028609 00000 n 
+0000028737 00000 n 
+0000031506 00000 n 
+0000031634 00000 n 
+0000034569 00000 n 
+0000034697 00000 n 
+0000037688 00000 n 
+0000037816 00000 n 
+0000040784 00000 n 
+0000040912 00000 n 
+0000043537 00000 n 
+0000043665 00000 n 
+0000046587 00000 n 
+0000046715 00000 n 
+0000049203 00000 n 
+0000049331 00000 n 
+0000051501 00000 n 
+trailer
+<< /Size 38 /Root 1 0 R >>
+startxref
+51629
+%%EOF

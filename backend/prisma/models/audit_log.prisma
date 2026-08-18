@@ -1,0 +1,36 @@
+/// Append-only audit trail.
+///
+/// `actorEmail` and `actorRole` are denormalized on purpose: an audit row must stay
+/// readable after the acting user is removed, so never rely on the `actor` relation
+/// alone when rendering. `action` is a plain String (not a Prisma enum) so adding a
+/// newly audited action never requires a migration — the allowed values are
+/// constrained by the AuditAction union in contracts/types/audit.types.ts.
+model AuditLog {
+  id String @id @default(uuid())
+
+  actorId    String?
+  actor      User?   @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+  actorEmail String
+  actorRole  String
+
+  action     String
+  entityType String
+  entityId   String?
+
+  organizationId String?
+  organization   Organization? @relation("AuditOrganization", fields: [organizationId], references: [id], onDelete: SetNull)
+
+  before Json?
+  after  Json?
+
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  @@index([organizationId, createdAt])
+  @@index([entityType, entityId])
+  @@index([actorId])
+  @@index([action])
+  @@index([createdAt])
+}

@@ -1,0 +1,43 @@
+model Item {
+  id          String     @id @default(uuid())
+  name        String
+  itemCode    String?
+  itemType    ItemType
+  hsnCode     String?
+  sacCode     String?
+  description String?
+  gstRate     Float
+  price       Float
+  status      ItemStatus @default(ACTIVE)
+
+  // Organization relationship (multi-tenancy)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  deletedAt   DateTime?
+  deletedById String?
+  deletedBy   User?     @relation("ItemDeleter", fields: [deletedById], references: [id])
+
+  createdById String
+  createdBy   User   @relation("ItemCreator", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  leads Lead[] @relation("LeadProductInterest")
+  // NOTE: Partial unique index manually added via migration to support soft delete uniqueness:
+  // CREATE UNIQUE INDEX unique_active_item_code ON items (organization_id, item_code) WHERE deleted_at IS NULL;
+
+  @@index([itemCode])
+  @@index([organizationId])
+}
+
+enum ItemStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum ItemType {
+  GOODS
+  SERVICE
+}

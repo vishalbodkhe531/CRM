@@ -1,0 +1,178 @@
+/// Commercial terms.
+///
+/// Plan and Subscription are deliberately NOT columns on Organization: a plan,
+/// a seat limit and a renewal date are facts about an agreement that changes over
+/// time, not facts about the company. Flattening them onto Organization would
+/// lose every plan change, make "cancelled but paid until March" unrepresentable,
+/// and let a price edit silently rewrite what existing tenants agreed to.
+///
+/// Limits and toggles are ROWS (PlanFeature), not columns. Adding a new limit is
+/// then a data change rather than a migration — the previous shape needed a
+/// migration per limit, which is how `storageLimitMb` ended up as a column
+/// nothing measured.
+enum PlanInterval {
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  EXPIRED
+}
+
+/// Plan catalogue. Platform-level — a plan is not owned by any organization.
+model Plan {
+  id String @id @default(uuid())
+
+  /// Stable machine key used in code, seeds and audit rows. Never rename an
+  /// existing code; add a new plan instead.
+  code String @unique
+
+  /// URL-friendly identifier for pricing pages and deep links.
+  slug String @unique
+
+  name        String
+  description String?
+
+  /// Money in the SMALLEST currency unit (paise) as an Int. ₹2,000 is 200000.
+  /// Never Float or Decimal: a fraction lost inside an invoice total cannot be
+  /// recovered afterwards.
+  priceMinor Int @default(0)
+
+  /// Single-currency INR by decision D6. The column is kept even though it is
+  /// currently always "INR" — adding it back later would mean guessing the
+  /// currency of every historical row.
+  currency String @default("INR")
+
+  billingCycle PlanInterval @default(MONTHLY)
+  trialDays    Int          @default(0)
+
+  /// Can this plan be assigned at all? False retires it — existing subscribers
+  /// keep working, but nobody new can be moved onto it.
+  isActive Boolean @default(true)
+
+  /// Is this plan offered to customers? False hides it from pricing pages and
+  /// self-serve pickers while remaining perfectly assignable by a super-admin.
+  ///
+  /// Deliberately separate from isActive: an enterprise deal or a grandfathered
+  /// legacy plan is LIVE but not on the menu. Conflating the two forces you to
+  /// mark a working plan "inactive" just to hide it.
+  isPublic Boolean @default(true)
+
+  sortOrder Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  features      PlanFeature[]
+  subscriptions Subscription[]
+
+  /// Back-relation for PlatformSetting.defaultPlan. At most one row.
+  platformDefaults PlatformSetting[] @relation("PlatformDefaultPlan")
+
+  @@index([isActive, isPublic, sortOrder])
+}
+
+/// One plan's value for one feature key.
+///
+/// The key is validated against FEATURE_KEYS in code, never free text from a UI.
+/// Two typed nullable columns rather than a single stringly-typed `value`: a
+/// limit is a number and a toggle is a boolean, and storing both as text means
+/// every read can fail to parse.
+model PlanFeature {
+  id String @id @default(uuid())
+
+  planId String
+  plan   Plan   @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  featureKey String
+
+  /// Limits only. NULL means UNLIMITED — never coerce it to 0, which would mean
+  /// "none allowed".
+  valueInt Int?
+
+  /// Toggles only.
+  valueBool Boolean?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([planId, featureKey])
+  @@index([featureKey])
+}
+
+/// Per-organization override of a single feature.
+///
+/// Exists so an enterprise deal ("same Growth plan but 200 seats") does not
+/// require forking a whole plan, which would otherwise leave the catalogue full
+/// of one-customer plans nobody dares edit.
+model SubscriptionFeatureOverride {
+  id String @id @default(uuid())
+
+  subscriptionId String
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  featureKey String
+
+  valueInt  Int?
+  valueBool Boolean?
+
+  /// Why this customer has different terms. Shows in the console next to the
+  /// value, so the next person does not have to guess.
+  note String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([subscriptionId, featureKey])
+}
+
+/// One live subscription per organization.
+///
+/// Plan changes MUTATE this row; the trail lives in AuditLog (and, once a
+/// gateway lands, in Invoice). If queryable billing history is ever needed, add
+/// a SubscriptionPeriod child table rather than dropping the @unique — every
+/// enforcement path assumes exactly one row per organization.
+model Subscription {
+  id String @id @default(uuid())
+
+  organizationId String       @unique
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  planId String
+  plan   Plan   @relation(fields: [planId], references: [id])
+
+  /// What an operator last SET. This is not necessarily what is true right now —
+  /// nothing flips it on a timer. Always resolve the effective state through
+  /// resolveSubscriptionState() in utils/business/subscription.utils.ts.
+  status SubscriptionStatus @default(TRIALING)
+
+  trialEndsAt        DateTime?
+  currentPeriodStart DateTime  @default(now())
+  currentPeriodEnd   DateTime?
+
+  cancelledAt DateTime?
+  /// Cancellation requested, but access continues until currentPeriodEnd.
+  cancelAtPeriodEnd Boolean @default(false)
+
+  /// Manual/offline billing until a gateway is wired up (decision D2).
+  billingEmail String?
+  billingNotes String?
+
+  /// Reserved for Razorpay. Unused until the gateway chunk — present now so
+  /// adding it is an additive migration rather than a schema change under load.
+  externalCustomerId     String?
+  externalSubscriptionId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  featureOverrides SubscriptionFeatureOverride[]
+
+  @@index([status, currentPeriodEnd])
+  @@index([planId])
+}

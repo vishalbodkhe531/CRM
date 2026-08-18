@@ -1,0 +1,32 @@
+model SignupRequest {
+  id String @id @default(uuid())
+
+  firstName   String
+  lastName    String
+  email       String
+  phone       String?
+  companyName String
+
+  status SignupRequestStatus @default(PENDING)
+
+  adminNotes String?
+
+  reviewedBy String?
+  reviewedAt DateTime?
+
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt(sort: Desc)])
+  @@index([email])
+}
+
+enum SignupRequestStatus {
+  PENDING
+  CONTACTED
+  APPROVED
+  REJECTED
+}

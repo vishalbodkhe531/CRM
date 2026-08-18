@@ -1,0 +1,2049 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [5 0 R 7 0 R 9 0 R 11 0 R 13 0 R 15 0 R 17 0 R 19 0 R 21 0 R 23 0 R 25 0 R 27 0 R 29 0 R 31 0 R] /Count 14 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Length 3690 >>
+stream
+BT
+/F1 8.7 Tf
+42 800 Td
+11 TL
+() Tj
+T*
+(SUPER ADMIN CRM AUDIT REPORT) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(Date: 2026-07-29) Tj
+T*
+(Scope: Super Admin access only) Tj
+T*
+(Modules audited: Dashboard, Notifications, Organizations, Billing, Announcements, Audit Log,) Tj
+T*
+(  Profile, Settings, Help) Tj
+T*
+(Audit method: Static code and architecture review of frontend, backend, Prisma schema, route) Tj
+T*
+(  guards, API scoping, validation, and UI flows.) Tj
+T*
+() Tj
+T*
+(Note: No application code or functionality was modified for this audit. This report is the) Tj
+T*
+(  only project artifact created.) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(EXECUTIVE SUMMARY) Tj
+T*
+() Tj
+T*
+(The Super Admin area has a strong foundation: role guards exist on the frontend, backend) Tj
+T*
+(  permissions generally centralize access, tenant users are pinned to their own) Tj
+T*
+(  organization, suspended organizations are blocked at authentication time, and billing,) Tj
+T*
+(  announcements, and audit log logic contain several good defensive decisions.) Tj
+T*
+() Tj
+T*
+(The main risk is not a missing Super Admin role check. The main risk is context leakage:) Tj
+T*
+(  Super Admin can scope into a tenant by setting `selectedOrganizationId`, and the API) Tj
+T*
+(  interceptor then sends `x-organization-id` automatically. One organization detail/edit) Tj
+T*
+(  route sets this selected organization but does not clean it up, so later global Super) Tj
+T*
+(  Admin pages can behave as if they are still inside that tenant.) Tj
+T*
+() Tj
+T*
+(The second major risk is server-side tenant route strictness. The frontend prevents many) Tj
+T*
+(  unsafe calls, but shared tenant APIs should still reject Super Admin requests without an) Tj
+T*
+(  explicit organization scope. At least the users API can return a platform-wide user list) Tj
+T*
+(  to a Super Admin if called without a selected organization.) Tj
+T*
+() Tj
+T*
+(Top priorities:) Tj
+T*
+() Tj
+T*
+(Priority | Severity | Issue | Main affected area) Tj
+T*
+(P0 | High | Stale `selectedOrganizationId` leaks tenant context into later Super Admin) Tj
+T*
+(  requests | Organization detail, billing banner, feature gates, tenant modules) Tj
+T*
+(P0 | High | Public unauthenticated organization slug lookup reveals organization) Tj
+T*
+(  id/status/prefix | Organizations, Super Admin workspace lookup) Tj
+T*
+(P0 | High | Shared tenant APIs can be called by Super Admin without explicit tenant scope |) Tj
+T*
+(  Users and other tenant data routes) Tj
+T*
+(P1 | Medium | Dashboard KPI semantics are unclear and may include archived/suspended data |) Tj
+T*
+(  Super Admin dashboard) Tj
+T*
+(P1 | Medium | Upload middleware can leave orphan files on validation failure | Profile,) Tj
+T*
+(  organization assets) Tj
+T*
+(P1 | Medium | Settings page is tenant billing oriented, not platform settings oriented |) Tj
+T*
+(  Settings, billing) Tj
+T*
+(P1 | Medium | Announcement scheduled audience is locked by backend but not by UI |) Tj
+T*
+(  Announcements) Tj
+T*
+(P2 | Medium | Billing effective-status filtering paginates in memory | Billing console) Tj
+T*
+(P2 | Low | Notifications "mark all read" only clears one bounded batch | Notifications) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(CROSS-CUTTING ARCHITECTURE FINDINGS) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(Role and Permission Control) Tj
+T*
+() Tj
+T*
+(Observed:) Tj
+T*
+(- Frontend route guards restrict Super Admin-only routes through) Tj
+T*
+(  `ORGANIZATION_ADMIN_ROUTE_ROLES`.) Tj
+T*
+(- Backend `allowPermission` lets Super Admin bypass permission checks.) Tj
+T*
+(- Dashboard route also checks the exact role for each dashboard endpoint.) Tj
+T*
+(- Announcement and audit services enforce organization scoping for non-Super Admin users.) Tj
+T*
+() Tj
+T*
+
+(Page 1 of 14) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 4 0 R >>
+endobj
+6 0 obj
+<< /Length 3304 >>
+stream
+BT
+/F1 8.7 Tf
+42 800 Td
+11 TL
+(Issues:) Tj
+T*
+(- UI guards are stronger than some API invariants. For example, Super Admin user list calls) Tj
+T*
+(  are disabled until an organization is selected, but the backend can still return users) Tj
+T*
+(  across organizations if the route is called directly without `x-organization-id`.) Tj
+T*
+() Tj
+T*
+(Best-practice solution:) Tj
+T*
+(- Treat Super Admin tenant access as two different modes:) Tj
+T*
+(  1. Platform mode: only platform endpoints can run unscoped.) Tj
+T*
+(  2. Tenant impersonation/scope mode: tenant-data endpoints require a valid organization id.) Tj
+T*
+(- Add a backend middleware such as `requireScopedOrganizationForSuperAdmin` for tenant) Tj
+T*
+(  modules.) Tj
+T*
+(- Keep frontend guards as UX protection, but enforce the data boundary in) Tj
+T*
+(  services/middleware.) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(Organization Data Isolation) Tj
+T*
+() Tj
+T*
+(Observed:) Tj
+T*
+(- Non-Super Admin users are pinned to `req.organizationId` in `requireOrganization`.) Tj
+T*
+(- Super Admin can optionally scope via `x-organization-id`.) Tj
+T*
+(- Most tenant hooks include selected org id in query keys.) Tj
+T*
+() Tj
+T*
+(Issues:) Tj
+T*
+(- The API interceptor sends `x-organization-id` for every Super Admin request once selected) Tj
+T*
+(  org exists.) Tj
+T*
+(- `OrganizationDetail` sets selected organization context without cleanup.) Tj
+T*
+(- Public slug lookup returns organization id/status/prefix.) Tj
+T*
+() Tj
+T*
+(Best-practice solution:) Tj
+T*
+(- Centralize selected organization context in the Super Admin workspace layout only.) Tj
+T*
+(- Clear context on every exit from scoped routes.) Tj
+T*
+(- Restrict automatic `x-organization-id` injection to known tenant endpoint prefixes.) Tj
+T*
+(- Require auth for organization slug lookup or return only truly public fields.) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(Suspended Organization Handling) Tj
+T*
+() Tj
+T*
+(Observed:) Tj
+T*
+(- `requireAuth` rejects users whose organization status is not `ACTIVE`.) Tj
+T*
+(- Archiving an organization sets `deletedAt` and forces status to `SUSPENDED`.) Tj
+T*
+(- Super Admin remains able to manage suspended/archived organizations.) Tj
+T*
+() Tj
+T*
+(Issues:) Tj
+T*
+(- Dashboard statistics and some global counts do not clearly state whether suspended or) Tj
+T*
+(  archived organizations are included.) Tj
+T*
+(- Help/support copy should clearly explain suspension vs archive behavior.) Tj
+T*
+() Tj
+T*
+(Best-practice solution:) Tj
+T*
+(- Define platform KPI semantics: live active only, active plus suspended, or all-time) Tj
+T*
+(  including archived.) Tj
+T*
+(- Add labels/toggles for "Active", "Suspended", "Archived", and "All".) Tj
+T*
+(- Ensure every suspend/archive/restore action has an audit row and clear UI confirmation.) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(Security Posture) Tj
+T*
+() Tj
+T*
+(Observed:) Tj
+T*
+(- Helmet is enabled but CSP is disabled.) Tj
+T*
+(- CSRF middleware requires `x-requested-with` or `x-csrf-token` for writes.) Tj
+T*
+(- Uploads are file-size and MIME/extension checked.) Tj
+T*
+(- Uploaded assets are served publicly from `/uploads`.) Tj
+T*
+() Tj
+T*
+(Issues:) Tj
+T*
+(- Header-only CSRF protection is weaker than token-based CSRF.) Tj
+T*
+(- Public uploads may expose profile images, organization logos, QR codes, and signatures by) Tj
+T*
+(  URL.) Tj
+T*
+
+(Page 2 of 14) Tj
+ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 6 0 R >>
+endobj
+8 0 obj
+<< /Length 3147 >>
+stream
+BT
+/F1 8.7 Tf
+42 800 Td
+11 TL
+(- Uploads can be written before validation fails, creating orphan files.) Tj
+T*
+() Tj
+T*
+(Best-practice solution:) Tj
+T*
+(- Use a real CSRF token or SameSite strategy aligned with production deployment.) Tj
+T*
+(- Add CSP, at least in report-only mode first.) Tj
+T*
+(- Move uploads through a temp folder and promote only after validation and DB success.) Tj
+T*
+(- Delete replaced files or run an orphan cleanup job.) Tj
+T*
+(- Consider private object storage or signed URLs for sensitive assets.) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(MODULE-WISE AUDIT REPORT) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(1. DASHBOARD) Tj
+T*
+() Tj
+T*
+(Severity: Medium) Tj
+T*
+() Tj
+T*
+(Affected functionality:) Tj
+T*
+(- Super Admin dashboard KPI accuracy) Tj
+T*
+(- Organization lead distribution) Tj
+T*
+(- Lead trend charts) Tj
+T*
+(- Recent organizations) Tj
+T*
+(- Organization status chart) Tj
+T*
+() Tj
+T*
+(Bugs/issues found:) Tj
+T*
+(- Total organizations use `prisma.organization.count\(\)` without `deletedAt` filtering, while) Tj
+T*
+(  organization list excludes archived by default. This can make dashboard totals disagree) Tj
+T*
+(  with the Organizations module.) Tj
+T*
+(- Organization status grouping does not clearly separate archived organizations from) Tj
+T*
+(  suspended live organizations.) Tj
+T*
+(- "Total Revenue" is actually approved quotation value, not subscription or billing revenue.) Tj
+T*
+(- Org-wise lead distribution maps every organization then slices top 6 in the UI, without an) Tj
+T*
+(  "Other" bucket.) Tj
+T*
+(- Dashboard query fetches lead trend rows and all organizations into memory, which can) Tj
+T*
+(  become expensive at platform scale.) Tj
+T*
+(- Hardcoded chart colors and green backgrounds may not fully match dark/light theme tokens.) Tj
+T*
+() Tj
+T*
+(Possible root cause:) Tj
+T*
+(- The dashboard mixes lifetime platform metrics and live operational metrics without an) Tj
+T*
+(  explicit metric contract.) Tj
+T*
+(- Aggregations are implemented partly in application memory for speed of development.) Tj
+T*
+() Tj
+T*
+(Best-practice solution:) Tj
+T*
+(- Define a dashboard metrics contract:) Tj
+T*
+(  - Active organizations) Tj
+T*
+(  - Suspended organizations) Tj
+T*
+(  - Archived organizations) Tj
+T*
+(  - Live users) Tj
+T*
+(  - Live leads) Tj
+T*
+(  - Approved quotation value) Tj
+T*
+(  - Subscription MRR/ARR when gateway data exists) Tj
+T*
+(- Rename "Total Revenue" to "Approved quotation value" unless it truly means billing) Tj
+T*
+(  revenue.) Tj
+T*
+(- Add archived handling explicitly to dashboard repository queries.) Tj
+T*
+(- Add an "Other" bucket for lead distribution.) Tj
+T*
+(- Use theme tokens for chart colors.) Tj
+T*
+() Tj
+T*
+(Performance improvements:) Tj
+T*
+(- Push monthly/weekly bucketing to the database or use materialized platform metrics.) Tj
+T*
+(- Add DB-side top N aggregation for organization lead distribution.) Tj
+T*
+(- Cache Super Admin dashboard stats for 1 to 5 minutes.) Tj
+T*
+(- Avoid loading every organization for distribution when only top N is displayed.) Tj
+T*
+() Tj
+T*
+(Edge cases to test:) Tj
+T*
+(- No organizations exist.) Tj
+T*
+(- Only archived organizations exist.) Tj
+T*
+
+(Page 3 of 14) Tj
+ET
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 8 0 R >>
+endobj
+10 0 obj
+<< /Length 3312 >>
+stream
+BT
+/F1 8.7 Tf
+42 800 Td
+11 TL
+(- Suspended organization has many leads/users.) Tj
+T*
+(- Organization deleted/archived after dashboard cache.) Tj
+T*
+(- Large platform: 10k organizations, 1M leads.) Tj
+T*
+(- Timezone boundary around month/week start.) Tj
+T*
+(- Approved quotation with zero or null totals.) Tj
+T*
+() Tj
+T*
+(Testing checklist:) Tj
+T*
+(- Verify dashboard totals match chosen KPI definition.) Tj
+T*
+(- Verify active/suspended/archived counts match Organizations list filters.) Tj
+T*
+(- Verify Super Admin dashboard endpoint rejects non-Super Admin roles.) Tj
+T*
+(- Verify mobile dashboard scroll and chart readability.) Tj
+T*
+(- Verify dark/light chart contrast.) Tj
+T*
+(- Verify dashboard remains responsive with large fixture data.) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(2. NOTIFICATIONS) Tj
+T*
+() Tj
+T*
+(Severity: Low to Medium) Tj
+T*
+() Tj
+T*
+(Affected functionality:) Tj
+T*
+(- Notification feed) Tj
+T*
+(- Announcement and notification merge) Tj
+T*
+(- Unread count) Tj
+T*
+(- Mark all read) Tj
+T*
+(- Bell/sidebar badge) Tj
+T*
+() Tj
+T*
+(Bugs/issues found:) Tj
+T*
+(- Per-user notification reads are correctly scoped by user id.) Tj
+T*
+(- "Mark all read" for normal notifications only processes one bounded batch of 200, so users) Tj
+T*
+(  with more unread notifications may still have unread items after clicking.) Tj
+T*
+(- Notifications page uses `announcementsLoading && notificationsLoading`, so if only one) Tj
+T*
+(  source is loading the page may show partial data without a visible loading/refresh state.) Tj
+T*
+(- Feed limit is finite; long notification history is not paginated in the full notifications) Tj
+T*
+(  page.) Tj
+T*
+() Tj
+T*
+(Possible root cause:) Tj
+T*
+(- Notification repository intentionally bounds hot-path writes but does not loop batches) Tj
+T*
+(  like announcement receipts do.) Tj
+T*
+(- The full notifications page reuses the bell feed pattern instead of a true history list.) Tj
+T*
+() Tj
+T*
+(Best-practice solution:) Tj
+T*
+(- Loop unread notification batches until zero, with a max-batch guard.) Tj
+T*
+(- Add pagination or infinite scroll for the notifications page.) Tj
+T*
+(- Use separate partial loading indicators for announcements and direct notifications.) Tj
+T*
+(- Keep per-user scoping in the repository.) Tj
+T*
+() Tj
+T*
+(Performance improvements:) Tj
+T*
+(- Keep unread count indexed by `[userId, readAt]`.) Tj
+T*
+(- Consider archival/retention for old notification rows.) Tj
+T*
+(- Avoid polling full read history every minute; poll unread count separately and fetch) Tj
+T*
+(  history on demand.) Tj
+T*
+() Tj
+T*
+(Edge cases to test:) Tj
+T*
+(- Super Admin has zero notifications.) Tj
+T*
+(- Super Admin has more than 200 unread notifications.) Tj
+T*
+(- Announcement unread count and notification unread count disagree during simultaneous) Tj
+T*
+(  mark-all.) Tj
+T*
+(- Delete notification while feed refetch is in progress.) Tj
+T*
+(- Dismiss announcement then view full history.) Tj
+T*
+() Tj
+T*
+(Testing checklist:) Tj
+T*
+(- Verify one user cannot mark another user's notification read or delete it.) Tj
+T*
+(- Verify mark-all clears all unread items, not only first batch.) Tj
+T*
+(- Verify badge count equals visible unread count.) Tj
+T*
+(- Verify bell and full page show consistent ordering.) Tj
+T*
+(- Verify mobile notification cards do not overflow.) Tj
+T*
+
+(Page 4 of 14) Tj
+ET
+endstream
+endobj
+11 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 10 0 R >>
+endobj
+12 0 obj
+<< /Length 3529 >>
+stream
+BT
+/F1 8.7 Tf
+42 800 Td
+11 TL
+(- Verify polling does not spam errors after token expiry.) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(3. ORGANIZATIONS) Tj
+T*
+() Tj
+T*
+(Severity: High) Tj
+T*
+() Tj
+T*
+(Affected functionality:) Tj
+T*
+(- Organization list) Tj
+T*
+(- Add/edit organization) Tj
+T*
+(- Organization workspace) Tj
+T*
+(- Suspend/archive/restore) Tj
+T*
+(- Tenant context for nested Super Admin modules) Tj
+T*
+() Tj
+T*
+(Bugs/issues found:) Tj
+T*
+(- `OrganizationDetail` sets `selectedOrganizationId` but does not clear it when leaving the) Tj
+T*
+(  page.) Tj
+T*
+(- API interceptor sends `x-organization-id` for all Super Admin requests when selected org) Tj
+T*
+(  id exists.) Tj
+T*
+(- `GET /organizations/by-slug/:slug` is public and returns id, slug, prefix, logo, and) Tj
+T*
+(  status.) Tj
+T*
+(- Public slug endpoint is currently used for Super Admin workspace/detail resolution, not a) Tj
+T*
+(  public login requirement.) Tj
+T*
+(- Uploading organization assets before body validation can leave orphan files if validation) Tj
+T*
+(  fails.) Tj
+T*
+(- Replacing organization assets does not appear to delete old asset files.) Tj
+T*
+(- Organization list handles archived filtering carefully, but dashboard metrics may not) Tj
+T*
+(  match its default live-only behavior.) Tj
+T*
+() Tj
+T*
+(Possible root cause:) Tj
+T*
+(- Tenant context is stored globally in Redux rather than route-locally.) Tj
+T*
+(- Slug lookup was made public as a convenience for client-side route resolution.) Tj
+T*
+(- Multer disk storage writes files before controller validation and DB transaction.) Tj
+T*
+() Tj
+T*
+(Best-practice solution:) Tj
+T*
+(- Add cleanup to every route that sets selected organization context, or better centralize) Tj
+T*
+(  it in a scoped provider.) Tj
+T*
+(- Only inject `x-organization-id` for tenant endpoint groups.) Tj
+T*
+(- Require authentication and Super Admin/tenant membership for slug lookup.) Tj
+T*
+(- Consider resolving organization workspace by slug through an authenticated Super Admin) Tj
+T*
+(  endpoint.) Tj
+T*
+(- Use temp upload directories and promote files after validation and DB success.) Tj
+T*
+(- Delete old assets after replacement or run orphan cleanup.) Tj
+T*
+() Tj
+T*
+(Performance improvements:) Tj
+T*
+(- Organization list already paginates and caps limit at 100.) Tj
+T*
+(- For platform-scale search, consider trigram/full-text indexes on name/slug/prefix.) Tj
+T*
+(- Avoid duplicate organization detail calls by letting slug endpoint return full authorized) Tj
+T*
+(  detail or by changing workspace route to id.) Tj
+T*
+() Tj
+T*
+(Edge cases to test:) Tj
+T*
+(- Navigate from `/super-admin/organizations/:slug/edit` to `/super-admin/billing` and ensure) Tj
+T*
+(  no stale tenant context remains.) Tj
+T*
+(- Archived organization slug lookup.) Tj
+T*
+(- Duplicate slug/prefix against archived organization.) Tj
+T*
+(- Suspend active organization with logged-in tenant users.) Tj
+T*
+(- Restore archived organization and verify subscription/billing state.) Tj
+T*
+(- Upload invalid file type, oversized file, and invalid body plus valid file.) Tj
+T*
+(- Long organization names on mobile.) Tj
+T*
+() Tj
+T*
+(Testing checklist:) Tj
+T*
+(- Verify Super Admin can list, search, filter active/suspended/archived organizations.) Tj
+T*
+(- Verify suspend blocks tenant login/refresh/API access immediately.) Tj
+T*
+(- Verify archive forces suspended and hides from default list.) Tj
+T*
+(- Verify restore reactivates and audit row is written.) Tj
+T*
+(- Verify public unauthenticated slug lookup is removed or minimized.) Tj
+T*
+
+(Page 5 of 14) Tj
+ET
+endstream
+endobj
+13 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 12 0 R >>
+endobj
+14 0 obj
+<< /Length 3448 >>
+stream
+BT
+/F1 8.7 Tf
+42 800 Td
+11 TL
+(- Verify selected organization id is cleared after leaving scoped pages.) Tj
+T*
+(- Verify organization asset replacement and cleanup behavior.) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(4. BILLING) Tj
+T*
+() Tj
+T*
+(Severity: Medium) Tj
+T*
+() Tj
+T*
+(Affected functionality:) Tj
+T*
+(- Super Admin billing console) Tj
+T*
+(- Plan create/edit) Tj
+T*
+(- Subscription edit) Tj
+T*
+(- Feature overrides) Tj
+T*
+(- Organization workspace billing) Tj
+T*
+(- Subscription banner) Tj
+T*
+() Tj
+T*
+(Bugs/issues found:) Tj
+T*
+(- Plan form fields are technically correct but need operator clarity:) Tj
+T*
+(  - `code` is the stable machine key used by code, seeds, scripts, and audit.) Tj
+T*
+(  - `slug` is the URL-friendly unique identifier for pricing pages/deep links.) Tj
+T*
+(  - `Assignable` off means the plan is retired and cannot be newly assigned; existing) Tj
+T*
+(  subscribers are unaffected.) Tj
+T*
+(  - `Offered to customers` off means the plan stays assignable by Super Admin but is hidden) Tj
+T*
+(  from customer/self-serve menus.) Tj
+T*
+(- Subscription status filtering resolves effective status in memory after fetching all) Tj
+T*
+(  matching subscriptions.) Tj
+T*
+(- Subscription banner links Super Admin to `/settings`, which is tenant settings oriented,) Tj
+T*
+(  not the Super Admin billing console or org workspace billing.) Tj
+T*
+(- Super Admin Settings page can show "No organization selected" when accessed globally.) Tj
+T*
+(- Retired plan changes are logged but should have stronger UI warnings when subscribers are) Tj
+T*
+(  affected.) Tj
+T*
+(- Manual/offline billing fields are practical but there is no invoice/payment history yet.) Tj
+T*
+() Tj
+T*
+(Possible root cause:) Tj
+T*
+(- Billing has both tenant and platform surfaces, but navigation and Settings still blur the) Tj
+T*
+(  distinction.) Tj
+T*
+(- Effective status depends on current time and dates, so it is not a simple DB column) Tj
+T*
+(  filter.) Tj
+T*
+() Tj
+T*
+(Best-practice solution:) Tj
+T*
+(- Keep plan slug, code, isActive, and isPublic as separate concepts.) Tj
+T*
+(- Add help text/tooltips in the plan form explaining the four fields in plain language.) Tj
+T*
+(- For Super Admin banner CTA, route to `/super-admin/billing` or) Tj
+T*
+(  `/super-admin/organizations/:slug/billing`.) Tj
+T*
+(- Split tenant settings from platform settings.) Tj
+T*
+(- Add a confirmation dialog when retiring a plan or lowering enforced limits while) Tj
+T*
+(  subscribers are on it.) Tj
+T*
+(- For effective status filters, add materialized status, scheduled resolver, or DB where) Tj
+T*
+(  approximations.) Tj
+T*
+() Tj
+T*
+(Performance improvements:) Tj
+T*
+(- Avoid fetching all subscriptions for status filters on large installations.) Tj
+T*
+(- Add indexes for subscription search fields and organization name joins if the billing list) Tj
+T*
+(  grows.) Tj
+T*
+(- Cache plan catalogue queries.) Tj
+T*
+(- Use background jobs for billing status snapshots.) Tj
+T*
+() Tj
+T*
+(Edge cases to test:) Tj
+T*
+(- Retire plan with active subscribers.) Tj
+T*
+(- Hide plan from customer menu but keep assignable.) Tj
+T*
+(- Assign retired plan to a subscription: should fail unless current plan is already retired) Tj
+T*
+(  and unchanged.) Tj
+T*
+(- Expired ACTIVE subscription shows effective EXPIRED.) Tj
+T*
+(- Trial with no trial end date.) Tj
+T*
+(- Cancel at period end before and after current period end.) Tj
+T*
+(- Organization with missing subscription repair flow.) Tj
+T*
+
+(Page 6 of 14) Tj
+ET
+endstream
+endobj
+15 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 14 0 R >>
+endobj
+16 0 obj
+<< /Length 3341 >>
+stream
+BT
+/F1 8.7 Tf
+42 800 Td
+11 TL
+(- Lower seat limit below current usage.) Tj
+T*
+() Tj
+T*
+(Testing checklist:) Tj
+T*
+(- Verify Super Admin can create/edit plans and subscriptions only through protected routes.) Tj
+T*
+(- Verify non-Super Admin cannot manage plans.) Tj
+T*
+(- Verify plan slug uniqueness and validation.) Tj
+T*
+(- Verify `isActive=false` prevents new assignment.) Tj
+T*
+(- Verify `isPublic=false` hides only public/customer menu surfaces.) Tj
+T*
+(- Verify effective status filters return correct totals and pagination.) Tj
+T*
+(- Verify billing changes are audited.) Tj
+T*
+(- Verify billing UI is responsive and dark/light consistent.) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(5. ANNOUNCEMENTS) Tj
+T*
+() Tj
+T*
+(Severity: Medium) Tj
+T*
+() Tj
+T*
+(Affected functionality:) Tj
+T*
+(- Announcement list) Tj
+T*
+(- Create/edit/publish/archive/delete) Tj
+T*
+(- Target organizations) Tj
+T*
+(- Target roles) Tj
+T*
+(- Bell/banner visibility) Tj
+T*
+(- Read/dismiss receipts) Tj
+T*
+() Tj
+T*
+(Bugs/issues found:) Tj
+T*
+(- Backend correctly locks audience changes for both PUBLISHED and SCHEDULED announcements.) Tj
+T*
+(- UI locks audience only when status is PUBLISHED, so scheduled announcements appear) Tj
+T*
+(  editable but save can fail.) Tj
+T*
+(- Super Admin can only author PLATFORM announcements; this is enforced and intentional.) Tj
+T*
+(- Announcement table resolves organization names by fetching only first 100 organizations.) Tj
+T*
+(  Target ids outside that page may display poorly or be omitted.) Tj
+T*
+(- Full management list can filter by organization id, but the filter UI currently does not) Tj
+T*
+(  expose an organization picker.) Tj
+T*
+(- Feed visibility for Super Admin intentionally does not show every platform announcement;) Tj
+T*
+(  management list is the platform view. This should be documented in help.) Tj
+T*
+() Tj
+T*
+(Possible root cause:) Tj
+T*
+(- UI status logic drifted from backend business rules.) Tj
+T*
+(- Organization name resolution is done client-side with a paged list rather than included in) Tj
+T*
+(  the announcement DTO.) Tj
+T*
+() Tj
+T*
+(Best-practice solution:) Tj
+T*
+(- Update UI lock condition to PUBLISHED or SCHEDULED.) Tj
+T*
+(- Include target organization names/counts in announcement list DTO.) Tj
+T*
+(- Add organization filter/search picker to Super Admin announcement management.) Tj
+T*
+(- Document that Super Admin authors platform announcements and reads/manages them in the) Tj
+T*
+(  management list.) Tj
+T*
+() Tj
+T*
+(Performance improvements:) Tj
+T*
+(- Avoid fetching organization list just to map target ids.) Tj
+T*
+(- Index announcement filters already exist; add tests for query combinations.) Tj
+T*
+(- For large platforms, avoid array-field scans on `targetOrganizationIds` if targeting) Tj
+T*
+(  becomes heavy; consider a join table.) Tj
+T*
+() Tj
+T*
+(Edge cases to test:) Tj
+T*
+(- Publish immediate vs scheduled announcement.) Tj
+T*
+(- Scheduled announcement crosses publishAt without a status-flipping job.) Tj
+T*
+(- Expired announcement should disappear from feed.) Tj
+T*
+(- Target all organizations vs selected organizations.) Tj
+T*
+(- Target selected roles.) Tj
+T*
+(- Dismissible false should keep banner/feed visible.) Tj
+T*
+(- Archive live announcement and verify it disappears.) Tj
+T*
+(- Delete soft-deletes and keeps receipts.) Tj
+T*
+() Tj
+T*
+(Testing checklist:) Tj
+T*
+
+(Page 7 of 14) Tj
+ET
+endstream
+endobj
+17 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 16 0 R >>
+endobj
+18 0 obj
+<< /Length 3195 >>
+stream
+BT
+/F1 8.7 Tf
+42 800 Td
+11 TL
+(- Verify Super Admin can create platform draft.) Tj
+T*
+(- Verify Admin cannot create platform announcement.) Tj
+T*
+(- Verify audience cannot change after publish or schedule.) Tj
+T*
+(- Verify target org visibility across two organizations.) Tj
+T*
+(- Verify role targeting for Admin, Manager, Executive.) Tj
+T*
+(- Verify unread counts and receipts.) Tj
+T*
+(- Verify mobile announcement table cards.) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(6. AUDIT LOG) Tj
+T*
+() Tj
+T*
+(Severity: Medium) Tj
+T*
+() Tj
+T*
+(Affected functionality:) Tj
+T*
+(- Audit log list) Tj
+T*
+(- Filters) Tj
+T*
+(- Detail diff dialog) Tj
+T*
+(- Platform vs organization activity visibility) Tj
+T*
+(- Compliance trail) Tj
+T*
+() Tj
+T*
+(Bugs/issues found:) Tj
+T*
+(- Audit repository is append-only at code level and scrubs sensitive keys.) Tj
+T*
+(- Super Admin can read all logs; organization admins are pinned to their org and cannot see) Tj
+T*
+(  platform-only activity.) Tj
+T*
+(- Completeness depends on each controller remembering to call `recordAudit`.) Tj
+T*
+(- Profile update audit records only `Object.keys\(data\)` and may omit file-only asset) Tj
+T*
+(  uploads.) Tj
+T*
+(- There is no export, retention policy, tamper-evidence, or immutable storage strategy.) Tj
+T*
+(- Filter UI lacks direct actor id/entity id/organization picker fields even though backend) Tj
+T*
+(  supports some of these query params.) Tj
+T*
+() Tj
+T*
+(Possible root cause:) Tj
+T*
+(- Audit is implemented as explicit controller calls rather than a required domain-event) Tj
+T*
+(  wrapper.) Tj
+T*
+(- Compliance features are still minimal.) Tj
+T*
+() Tj
+T*
+(Best-practice solution:) Tj
+T*
+(- Create an audit coverage matrix for every mutating endpoint.) Tj
+T*
+(- Include uploaded file field names in profile/asset audit rows, without storing file paths) Tj
+T*
+(  or sensitive content.) Tj
+T*
+(- Add export to CSV/PDF for Super Admin.) Tj
+T*
+(- Add organization, actor, entity id, and date range filters in UI.) Tj
+T*
+(- Consider immutable append-only storage, hash chaining, or WORM storage if compliance) Tj
+T*
+(  matters.) Tj
+T*
+() Tj
+T*
+(Performance improvements:) Tj
+T*
+(- Current indexes are good for common filters.) Tj
+T*
+(- For high-volume audit, partition by month or archive older logs.) Tj
+T*
+(- Add cursor pagination for deep history.) Tj
+T*
+() Tj
+T*
+(Edge cases to test:) Tj
+T*
+(- Failed permission and subscription events are audited by global error handler if) Tj
+T*
+(  configured.) Tj
+T*
+(- Login failed for known vs unknown email.) Tj
+T*
+(- Super Admin action on tenant resource has organizationId attached.) Tj
+T*
+(- Profile asset-only update.) Tj
+T*
+(- Search and filters combined with pagination.) Tj
+T*
+(- Date range timezone boundaries.) Tj
+T*
+() Tj
+T*
+(Testing checklist:) Tj
+T*
+(- Verify every Super Admin create/update/delete/publish/archive/reset action writes audit.) Tj
+T*
+(- Verify audit snapshots exclude passwords/tokens/secrets.) Tj
+T*
+(- Verify org admin cannot see Super Admin platform rows.) Tj
+T*
+(- Verify Super Admin can filter by action/entity/date/search.) Tj
+T*
+(- Verify diff dialog handles null before/after.) Tj
+T*
+(- Verify audit table mobile cards show useful context.) Tj
+T*
+
+(Page 8 of 14) Tj
+ET
+endstream
+endobj
+19 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 18 0 R >>
+endobj
+20 0 obj
+<< /Length 2972 >>
+stream
+BT
+/F1 8.7 Tf
+42 800 Td
+11 TL
+() Tj
+T*
+() Tj
+T*
+(7. PROFILE) Tj
+T*
+() Tj
+T*
+(Severity: Medium) Tj
+T*
+() Tj
+T*
+(Affected functionality:) Tj
+T*
+(- Profile image upload) Tj
+T*
+(- Personal details update) Tj
+T*
+(- Password change) Tj
+T*
+(- Theme toggle) Tj
+T*
+(- Quotation PDF assets) Tj
+T*
+() Tj
+T*
+(Bugs/issues found:) Tj
+T*
+(- Profile image upload validates type/size on both client and server.) Tj
+T*
+(- Super Admin can change password; Manager/Executive password panel is hidden.) Tj
+T*
+(- Organization assets are only shown for Admin/Manager, so Super Admin profile does not show) Tj
+T*
+(  tenant PDF assets globally.) Tj
+T*
+(- Upload middleware writes files before request validation, so invalid body plus valid file) Tj
+T*
+(  can leave orphan files.) Tj
+T*
+(- Asset-only profile updates may not be fully reflected in audit `fields`.) Tj
+T*
+(- Public `/uploads` means profile images and organization assets are accessible by URL.) Tj
+T*
+(- Async profile image dispatch does not unwrap/rethrow errors, so local upload spinner) Tj
+T*
+(  clears but failure handling relies on slice/toast behavior.) Tj
+T*
+() Tj
+T*
+(Possible root cause:) Tj
+T*
+(- Disk upload middleware precedes validation in Express route order.) Tj
+T*
+(- Audit row intentionally stores only touched field names but file fields are not added to) Tj
+T*
+(  that list.) Tj
+T*
+() Tj
+T*
+(Best-practice solution:) Tj
+T*
+(- Use temp uploads and cleanup on validation or DB failure.) Tj
+T*
+(- Add uploaded field names to audit after fields.) Tj
+T*
+(- Consider signed/private asset delivery for sensitive images.) Tj
+T*
+(- Use mutation unwrap or explicit result checks for image upload actions.) Tj
+T*
+(- Add image metadata stripping and malware scanning if assets are customer-provided in) Tj
+T*
+(  production.) Tj
+T*
+() Tj
+T*
+(Performance improvements:) Tj
+T*
+(- Compress/resize profile images and logos server-side.) Tj
+T*
+(- Store assets in object storage/CDN rather than local disk for production.) Tj
+T*
+(- Cache resolved asset URLs.) Tj
+T*
+() Tj
+T*
+(Edge cases to test:) Tj
+T*
+(- Invalid image type.) Tj
+T*
+(- File larger than 5MB.) Tj
+T*
+(- Valid file plus invalid first/last name.) Tj
+T*
+(- Network error during upload.) Tj
+T*
+(- Password changed should invalidate old sessions.) Tj
+T*
+(- Theme toggle persists after refresh.) Tj
+T*
+(- Mobile profile layout with long email/name.) Tj
+T*
+() Tj
+T*
+(Testing checklist:) Tj
+T*
+(- Verify Super Admin can update name/mobile/profile image.) Tj
+T*
+(- Verify password change logs out or invalidates refresh token as intended.) Tj
+T*
+(- Verify upload failures show clear toast and do not update UI incorrectly.) Tj
+T*
+(- Verify no orphan files after validation failures once fixed.) Tj
+T*
+(- Verify profile page dark/light consistency.) Tj
+T*
+(- Verify public asset exposure is acceptable or replaced with protected access.) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(8. SETTINGS) Tj
+T*
+() Tj
+T*
+(Severity: Medium) Tj
+T*
+() Tj
+T*
+(Affected functionality:) Tj
+T*
+
+(Page 9 of 14) Tj
+ET
+endstream
+endobj
+21 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 20 0 R >>
+endobj
+22 0 obj
+<< /Length 3027 >>
+stream
+BT
+/F1 8.7 Tf
+42 800 Td
+11 TL
+(- Settings page) Tj
+T*
+(- Billing tab) Tj
+T*
+(- Subscription banner CTA) Tj
+T*
+(- Platform vs tenant configuration) Tj
+T*
+() Tj
+T*
+(Bugs/issues found:) Tj
+T*
+(- Settings page copy says "Manage your organization's plan and preferences" even for Super) Tj
+T*
+(  Admin.) Tj
+T*
+(- The only settings tab is Billing, which is tenant-oriented.) Tj
+T*
+(- For global Super Admin access, BillingView can show "No organization selected".) Tj
+T*
+(- Super Admin already has `/super-admin/billing`, so Settings duplicates or misroutes) Tj
+T*
+(  billing work.) Tj
+T*
+(- There is no visible platform settings surface for security, branding, defaults, support,) Tj
+T*
+(  feature policy, or system preferences.) Tj
+T*
+() Tj
+T*
+(Possible root cause:) Tj
+T*
+(- Settings was built as organization admin settings and later allowed for Super Admin) Tj
+T*
+(  without a separate platform settings design.) Tj
+T*
+() Tj
+T*
+(Best-practice solution:) Tj
+T*
+(- Split settings into:) Tj
+T*
+(  - Tenant settings: organization plan/preferences for Admin.) Tj
+T*
+(  - Platform settings: Super Admin system preferences.) Tj
+T*
+(- Hide Settings for Super Admin until a real platform settings page exists, or route it to) Tj
+T*
+(  platform settings.) Tj
+T*
+(- Update subscription banner CTA by role and scope.) Tj
+T*
+() Tj
+T*
+(Performance improvements:) Tj
+T*
+(- Minimal performance concern today.) Tj
+T*
+(- Avoid firing tenant billing queries when no organization is selected.) Tj
+T*
+() Tj
+T*
+(Edge cases to test:) Tj
+T*
+(- Super Admin opens `/settings` from sidebar.) Tj
+T*
+(- Super Admin opens Settings after visiting an organization workspace.) Tj
+T*
+(- Super Admin opens Settings with stale selected organization from edit page.) Tj
+T*
+(- Admin opens tenant settings with lapsed subscription.) Tj
+T*
+(- Direct URL access by Manager/Executive should be denied.) Tj
+T*
+() Tj
+T*
+(Testing checklist:) Tj
+T*
+(- Verify Settings route roles match intended product behavior.) Tj
+T*
+(- Verify global Super Admin settings never show stale tenant billing.) Tj
+T*
+(- Verify Admin settings stays organization-scoped.) Tj
+T*
+(- Verify loading and empty state wording is role-aware.) Tj
+T*
+(- Verify mobile settings tabs and billing content.) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(9. HELP) Tj
+T*
+() Tj
+T*
+(Severity: Low to Medium) Tj
+T*
+() Tj
+T*
+(Affected functionality:) Tj
+T*
+(- Help page) Tj
+T*
+(- FAQs) Tj
+T*
+(- Search) Tj
+T*
+(- Action cards) Tj
+T*
+(- Support contacts) Tj
+T*
+() Tj
+T*
+(Bugs/issues found:) Tj
+T*
+(- Super Admin FAQ content is thin and partly stale:) Tj
+T*
+(  - It says "Create Organization" while UI uses "+ Add Organization".) Tj
+T*
+(  - It says admin can be assigned from Users tab, but initial admin is created during) Tj
+T*
+(  organization creation.) Tj
+T*
+(- Help action cards look clickable but do not navigate or open mail/ticket flows.) Tj
+T*
+(- Filter button has no behavior.) Tj
+T*
+(- Support email and phone are placeholders.) Tj
+T*
+(- Search only matches questions, not answers or module names.) Tj
+T*
+
+(Page 10 of 14) Tj
+ET
+endstream
+endobj
+23 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 22 0 R >>
+endobj
+24 0 obj
+<< /Length 2861 >>
+stream
+BT
+/F1 8.7 Tf
+42 800 Td
+11 TL
+(- No Super Admin help for billing, plan slug/code, isActive/isPublic, subscription status,) Tj
+T*
+(  announcements, audit logs, suspension/archive, or organization workspace.) Tj
+T*
+() Tj
+T*
+(Possible root cause:) Tj
+T*
+(- Help was implemented as static starter content, not as maintained product documentation.) Tj
+T*
+() Tj
+T*
+(Best-practice solution:) Tj
+T*
+(- Create role-specific help content from actual routes and labels.) Tj
+T*
+(- Make action cards real links/actions.) Tj
+T*
+(- Remove dead filter button or implement category filters.) Tj
+T*
+(- Add searchable help topics for Super Admin workflows.) Tj
+T*
+(- Move support contacts to configuration/env.) Tj
+T*
+() Tj
+T*
+(Performance improvements:) Tj
+T*
+(- Static help is lightweight.) Tj
+T*
+(- If help becomes large, index locally or fetch docs by role.) Tj
+T*
+() Tj
+T*
+(Edge cases to test:) Tj
+T*
+(- Search no results.) Tj
+T*
+(- Long FAQ answer on mobile.) Tj
+T*
+(- Keyboard accessibility of FAQ toggles.) Tj
+T*
+(- Action card click behavior.) Tj
+T*
+(- Dark/light styling.) Tj
+T*
+(- Placeholder support values in production.) Tj
+T*
+() Tj
+T*
+(Testing checklist:) Tj
+T*
+(- Verify Super Admin help content matches real screens.) Tj
+T*
+(- Verify "plan slug", "assignable", and "offered to customers" are explained.) Tj
+T*
+(- Verify search covers question and answer text.) Tj
+T*
+(- Verify action cards navigate or open correct support flow.) Tj
+T*
+(- Verify no dead buttons remain.) Tj
+T*
+(- Verify mobile layout and dark/light consistency.) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(IMPROVEMENT ROADMAP) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(Phase 0: Baseline and Safety Net) Tj
+T*
+() Tj
+T*
+(Goal: Lock down expected behavior before fixes.) Tj
+T*
+() Tj
+T*
+(Actions:) Tj
+T*
+(- Create Super Admin test users and at least three organizations: active, suspended,) Tj
+T*
+(  archived.) Tj
+T*
+(- Create billing fixtures: active plan, retired plan, private plan, expired subscription,) Tj
+T*
+(  cancelled subscription, org without subscription.) Tj
+T*
+(- Add e2e smoke tests for Super Admin navigation and tenant scoping.) Tj
+T*
+(- Add API tests for direct-route calls, not only browser flows.) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(Phase 1: Data Isolation and Security) Tj
+T*
+() Tj
+T*
+(Goal: Remove cross-organization leakage risks.) Tj
+T*
+() Tj
+T*
+(Actions:) Tj
+T*
+(- Fix stale selected organization cleanup in organization detail/edit routes.) Tj
+T*
+(- Add backend requirement that Super Admin must provide org scope for tenant-data modules.) Tj
+T*
+(- Restrict `x-organization-id` injection to tenant endpoints.) Tj
+T*
+(- Protect or minimize organization slug lookup.) Tj
+T*
+(- Add tests that direct API calls without scope fail for tenant data routes.) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(Phase 2: Correctness and Operator Clarity) Tj
+T*
+() Tj
+T*
+(Goal: Make Super Admin decisions predictable.) Tj
+T*
+() Tj
+T*
+
+(Page 11 of 14) Tj
+ET
+endstream
+endobj
+25 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 24 0 R >>
+endobj
+26 0 obj
+<< /Length 3049 >>
+stream
+BT
+/F1 8.7 Tf
+42 800 Td
+11 TL
+(Actions:) Tj
+T*
+(- Define dashboard KPI semantics and update labels/queries.) Tj
+T*
+(- Fix subscription banner CTA for Super Admin.) Tj
+T*
+(- Split Super Admin platform settings from Admin tenant settings.) Tj
+T*
+(- Lock scheduled announcement audience in UI.) Tj
+T*
+(- Add plan form help text for code, slug, assignable, and offered-to-customers.) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(Phase 3: Performance and Operational Hygiene) Tj
+T*
+() Tj
+T*
+(Goal: Keep the platform stable as data grows.) Tj
+T*
+() Tj
+T*
+(Actions:) Tj
+T*
+(- Move dashboard trend/distribution aggregation into DB-side queries or materialized stats.) Tj
+T*
+(- Replace in-memory subscription effective-status filtering with materialized state or DB) Tj
+T*
+(  filters.) Tj
+T*
+(- Batch-loop notification mark-all-read.) Tj
+T*
+(- Add upload temp/promotion cleanup and old asset deletion.) Tj
+T*
+(- Add audit export and retention policy.) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(Phase 4: UX, Responsive, and Dark/Light Polish) Tj
+T*
+() Tj
+T*
+(Goal: Make the Super Admin console feel production-ready.) Tj
+T*
+() Tj
+T*
+(Actions:) Tj
+T*
+(- Replace hardcoded colors with theme tokens.) Tj
+T*
+(- Review all Super Admin tables/cards on mobile.) Tj
+T*
+(- Add robust empty, loading, and partial-loading states.) Tj
+T*
+(- Improve Help content and make action cards functional.) Tj
+T*
+(- Add organization picker filters where backend already supports organization filtering.) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(MODULE-WISE TESTING CHECKLIST) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(Dashboard) Tj
+T*
+() Tj
+T*
+(- Super Admin can access `/dashboard`; Admin/Manager/Executive cannot access) Tj
+T*
+(  `/api/v1/dashboard/super-admin`.) Tj
+T*
+(- KPI totals match the selected metric definition.) Tj
+T*
+(- Archived organizations are either excluded or separately counted.) Tj
+T*
+(- Suspended organization data is clearly included/excluded.) Tj
+T*
+(- Lead trend handles empty data and timezone boundaries.) Tj
+T*
+(- Dashboard charts remain readable in dark and light mode.) Tj
+T*
+(- Mobile layout has no horizontal content overlap except intended table scroll.) Tj
+T*
+(- Large fixture data does not time out.) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(Notifications) Tj
+T*
+() Tj
+T*
+(- Feed shows both direct notifications and announcements in correct order.) Tj
+T*
+(- Unread badge equals notification unread plus announcement unread.) Tj
+T*
+(- Mark one read updates UI and server state.) Tj
+T*
+(- Mark all read clears more than 200 unread notifications.) Tj
+T*
+(- Delete only removes caller's own notification.) Tj
+T*
+(- Dismissed announcements appear in full history when requested.) Tj
+T*
+(- Loading state is clear when only one feed source is loading.) Tj
+T*
+(- Mobile cards do not overflow with long title/body.) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(Organizations) Tj
+T*
+() Tj
+T*
+(- Create organization also creates admin user, sequences, and subscription atomically.) Tj
+T*
+(- Duplicate slug/prefix rejects even when duplicate belongs to archived organization.) Tj
+T*
+(- Public slug endpoint is protected or minimized.) Tj
+T*
+
+(Page 12 of 14) Tj
+ET
+endstream
+endobj
+27 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 26 0 R >>
+endobj
+28 0 obj
+<< /Length 3307 >>
+stream
+BT
+/F1 8.7 Tf
+42 800 Td
+11 TL
+(- Suspend blocks tenant users immediately.) Tj
+T*
+(- Archive hides organization from default list and reserves slug/prefix.) Tj
+T*
+(- Restore returns organization to expected active behavior.) Tj
+T*
+(- Stale selected organization is cleared after leaving detail/edit/workspace routes.) Tj
+T*
+(- Organization asset uploads validate type/size and clean up failed uploads.) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(Billing) Tj
+T*
+() Tj
+T*
+(- Super Admin can create plan with valid code/slug/features.) Tj
+T*
+(- Duplicate plan code/slug rejects.) Tj
+T*
+(- Retired plan cannot be newly assigned.) Tj
+T*
+(- Private plan is hidden from customer menu but assignable by Super Admin.) Tj
+T*
+(- Existing subscribers remain on retired plans.) Tj
+T*
+(- Expired/cancelled/past-due effective statuses resolve correctly.) Tj
+T*
+(- Status filter pagination returns correct totals.) Tj
+T*
+(- Feature override save/revert works.) Tj
+T*
+(- Billing changes appear in audit log.) Tj
+T*
+(- Super Admin billing CTA opens the correct platform or organization billing page.) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(Announcements) Tj
+T*
+() Tj
+T*
+(- Super Admin can create platform draft.) Tj
+T*
+(- Admin cannot create platform announcement.) Tj
+T*
+(- Publishing immediate announcement makes it visible immediately.) Tj
+T*
+(- Scheduled announcement becomes visible after publishAt.) Tj
+T*
+(- Published and scheduled audiences cannot be changed in UI or API.) Tj
+T*
+(- Target organization selection reaches only selected organizations.) Tj
+T*
+(- Target role selection reaches only selected roles.) Tj
+T*
+(- Expired or archived announcements disappear from feed.) Tj
+T*
+(- Read/dismiss receipts update unread counts.) Tj
+T*
+(- Announcement list target organization names work beyond first 100 organizations.) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(Audit Log) Tj
+T*
+() Tj
+T*
+(- Super Admin can view platform and organization logs.) Tj
+T*
+(- Admin can view only own organization logs.) Tj
+T*
+(- Platform-only actions are hidden from Admin.) Tj
+T*
+(- Every Super Admin mutation writes an audit row.) Tj
+T*
+(- Passwords, tokens, secrets, and generated temporary password never appear in audit.) Tj
+T*
+(- Profile asset-only update records touched file fields.) Tj
+T*
+(- Filters combine correctly with pagination.) Tj
+T*
+(- Detail diff handles null before/after.) Tj
+T*
+(- Export, retention, and immutable storage requirements are defined.) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(Profile) Tj
+T*
+() Tj
+T*
+(- Super Admin can update first name, last name, mobile, and profile image.) Tj
+T*
+(- Invalid/oversized profile image is rejected client and server side.) Tj
+T*
+(- Failed profile upload does not leave stale preview or orphan file after cleanup fix.) Tj
+T*
+(- Password change invalidates older sessions.) Tj
+T*
+(- Theme toggle persists and applies globally.) Tj
+T*
+(- Public uploaded asset URLs are accepted by policy or replaced.) Tj
+T*
+(- Mobile layout handles long name/email.) Tj
+T*
+(- Dark/light mode styling is consistent.) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(Settings) Tj
+T*
+() Tj
+T*
+(- Super Admin `/settings` behavior is defined: platform settings or hidden.) Tj
+T*
+(- Admin settings remains organization-scoped.) Tj
+T*
+(- Manager/Executive cannot access settings.) Tj
+T*
+(- Billing tab does not query without required organization context.) Tj
+T*
+
+(Page 13 of 14) Tj
+ET
+endstream
+endobj
+29 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 28 0 R >>
+endobj
+30 0 obj
+<< /Length 1950 >>
+stream
+BT
+/F1 8.7 Tf
+42 800 Td
+11 TL
+(- Subscription banner routes Admin and Super Admin to correct billing surfaces.) Tj
+T*
+(- Empty/loading/error states are role-aware.) Tj
+T*
+(- Dark/light and mobile layouts are consistent.) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(Help) Tj
+T*
+() Tj
+T*
+(- Super Admin FAQs match real route labels and flows.) Tj
+T*
+(- Plan slug/code/isActive/isPublic are explained.) Tj
+T*
+(- Search covers questions, answers, and module keywords.) Tj
+T*
+(- Filter button either works or is removed.) Tj
+T*
+(- User Guide, Contact Administrator, and Submit Ticket cards perform actions.) Tj
+T*
+(- Support contacts are real/configurable.) Tj
+T*
+(- FAQ interactions are keyboard-accessible.) Tj
+T*
+(- Help page works on mobile and dark/light modes.) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(RECOMMENDED FIX ORDER) Tj
+T*
+() Tj
+T*
+(1. Fix stale selected organization context and backend tenant-scope enforcement.) Tj
+T*
+(2. Protect or minimize public organization slug lookup.) Tj
+T*
+(3. Clarify dashboard KPI definitions and update dashboard queries/labels.) Tj
+T*
+(4. Split Super Admin Settings from tenant Billing settings.) Tj
+T*
+(5. Align announcement UI with backend scheduled/published audience locking.) Tj
+T*
+(6. Add upload cleanup and file lifecycle management.) Tj
+T*
+(7. Improve billing status filter scalability.) Tj
+T*
+(8. Improve notification mark-all-read batching.) Tj
+T*
+(9. Expand audit coverage/export and Help content.) Tj
+T*
+(10. Complete dark/light, responsiveness, and empty/loading state polish.) Tj
+T*
+() Tj
+T*
+() Tj
+T*
+(FINAL NOTES) Tj
+T*
+() Tj
+T*
+(The Super Admin design is close to a sound platform console, but it needs a clearer boundary) Tj
+T*
+(  between platform mode and tenant-scoped mode. Once that boundary is explicit in both) Tj
+T*
+(  routing and backend middleware, most of the remaining issues become manageable) Tj
+T*
+(  correctness, UX, and scale improvements rather than serious data-isolation risks.) Tj
+T*
+
+(Page 14 of 14) Tj
+ET
+endstream
+endobj
+31 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R >> >> /Contents 30 0 R >>
+endobj
+xref
+0 32
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000205 00000 n 
+0000000275 00000 n 
+0000004017 00000 n 
+0000004143 00000 n 
+0000007499 00000 n 
+0000007625 00000 n 
+0000010824 00000 n 
+0000010950 00000 n 
+0000014315 00000 n 
+0000014443 00000 n 
+0000018025 00000 n 
+0000018153 00000 n 
+0000021654 00000 n 
+0000021782 00000 n 
+0000025176 00000 n 
+0000025304 00000 n 
+0000028552 00000 n 
+0000028680 00000 n 
+0000031705 00000 n 
+0000031833 00000 n 
+0000034913 00000 n 
+0000035041 00000 n 
+0000037955 00000 n 
+0000038083 00000 n 
+0000041185 00000 n 
+0000041313 00000 n 
+0000044673 00000 n 
+0000044801 00000 n 
+0000046804 00000 n 
+trailer
+<< /Size 32 /Root 1 0 R >>
+startxref
+46932
+%%EOF

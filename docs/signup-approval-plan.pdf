@@ -1,0 +1,331 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [7 0 R 9 0 R 11 0 R 13 0 R 15 0 R] /Count 5 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+6 0 obj
+<< /Length 5278 >>
+stream
+BT /F2 22 Tf 0.07 0.09 0.14 rg 1 0 0 1 50.00 789.89 Tm (Approval-Based Signup Flow - Production) Tj ET
+BT /F2 22 Tf 0.07 0.09 0.14 rg 1 0 0 1 50.00 762.89 Tm (Plan) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 50.00 724.89 Tm (Prepared as a senior SaaS architecture recommendation for replacing immediate account) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 50.00 709.39 Tm (creation with a reviewed signup workflow.) Tj ET
+0.82 0.85 0.88 RG 50 689.89 m 545.28 689.89 l S
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 50.00 679.89 Tm (Recommendation: Use a separate SignupRequest table as the intake layer. Do not create real) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 50.00 664.39 Tm (User or Organization records until a Super Admin approves the request.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 50.00 644.89 Tm (This keeps pending prospects separate from real customers, avoids fake organizations,) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 50.00 629.39 Tm (prevents accidental dashboard access, simplifies billing, and gives the business a clean) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 50.00 613.89 Tm (audit trail.) Tj ET
+BT /F2 14 Tf 0.07 0.09 0.14 rg 1 0 0 1 50.00 580.39 Tm (Target Flow) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 555.39 Tm (1.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 70.00 555.39 Tm (Visitor submits the signup form.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 538.89 Tm (2.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 70.00 538.89 Tm (The system saves a pending SignupRequest.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 522.39 Tm (3.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 70.00 522.39 Tm (The visitor sees the success modal: "Thank you for registering. Our team will contact) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 70.00 506.89 Tm (you after reviewing your request.") Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 490.39 Tm (4.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 70.00 490.39 Tm (The system notifies Super Admins.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 473.89 Tm (5.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 70.00 473.89 Tm (A Super Admin approves or rejects the request.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 457.39 Tm (6.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 70.00 457.39 Tm (Only after approval, the system creates the organization, first Admin user, required) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 70.00 441.89 Tm (authentication records, default sequences/settings, and subscription or trial.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 425.39 Tm (7.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 70.00 425.39 Tm (The approved contact receives an activation email.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 408.89 Tm (8.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 70.00 408.89 Tm (The contact sets a password or verifies their email, then logs in manually.) Tj ET
+BT /F2 14 Tf 0.07 0.09 0.14 rg 1 0 0 1 50.00 376.39 Tm (Why A Separate SignupRequest Table Is Best) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 50.00 351.39 Tm (A signup request is not the same thing as a user account. It is a business intake record.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 50.00 335.89 Tm (Keeping it separate is the cleanest production model.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 316.39 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 316.39 Tm (No inactive or fake organizations polluting customer data.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 299.89 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 299.89 Tm (No unapproved users in authentication tables.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 283.39 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 283.39 Tm (No accidental access to dashboard, billing, sequences, or tenant data.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 266.89 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 266.89 Tm (Clear Super Admin review workflow.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 250.39 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 250.39 Tm (Easier duplicate handling, expiry, rejection, and audit logging.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 233.89 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 233.89 Tm (Cleaner reporting because real customer tables contain only approved accounts.) Tj ET
+BT /F2 14 Tf 0.07 0.09 0.14 rg 1 0 0 1 50.00 201.39 Tm (SignupRequest Fields) Tj ET
+BT /F2 11.5 Tf 0.07 0.09 0.14 rg 1 0 0 1 50.00 168.39 Tm (Business And Contact) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 145.89 Tm (id) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 132.29 Tm (company_name) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 118.69 Tm (company_domain) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 105.09 Tm (contact_name) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 91.49 Tm (contact_email) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 77.89 Tm (contact_phone) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 64.29 Tm (requested_plan) Tj ET
+BT /F1 8 Tf 0.45 0.49 0.56 rg 1 0 0 1 535.28 28 Tm (1) Tj ET
+endstream
+endobj
+7 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 6 0 R >>
+endobj
+8 0 obj
+<< /Length 3766 >>
+stream
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 789.89 Tm (company_size) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 776.29 Tm (message / use_case) Tj ET
+BT /F2 11.5 Tf 0.07 0.09 0.14 rg 1 0 0 1 50.00 751.69 Tm (Status And Review) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 729.19 Tm (status: pending | approved | rejected | expired | cancelled) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 715.59 Tm (approved_by) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 701.99 Tm (approved_at) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 688.39 Tm (rejected_by) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 674.79 Tm (rejected_at) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 661.19 Tm (rejection_reason_internal) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 647.59 Tm (rejection_reason_public) Tj ET
+BT /F2 11.5 Tf 0.07 0.09 0.14 rg 1 0 0 1 50.00 622.99 Tm (Normalization And Duplicate Checks) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 600.49 Tm (normalized_email) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 586.89 Tm (normalized_company_name) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 573.29 Tm (normalized_domain) Tj ET
+BT /F2 11.5 Tf 0.07 0.09 0.14 rg 1 0 0 1 50.00 548.69 Tm (Security And Tracking) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 526.19 Tm (ip_address) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 512.59 Tm (user_agent) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 498.99 Tm (source) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 485.39 Tm (utm_source) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 471.79 Tm (utm_campaign) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 458.19 Tm (expires_at) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 444.59 Tm (created_at) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 430.99 Tm (updated_at) Tj ET
+BT /F2 11.5 Tf 0.07 0.09 0.14 rg 1 0 0 1 50.00 406.39 Tm (Created Records After Approval) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 383.89 Tm (created_organization_id) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 370.29 Tm (created_user_id) Tj ET
+BT /F2 14 Tf 0.07 0.09 0.14 rg 1 0 0 1 50.00 339.69 Tm (Audit Log Table) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 50.00 314.69 Tm (Add a separate event table for compliance, support, and debugging.) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 295.19 Tm (signup_request_events.id) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 281.59 Tm (signup_request_events.signup_request_id) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 267.99 Tm (signup_request_events.actor_type: system | super_admin) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 254.39 Tm (signup_request_events.actor_id) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 240.79 Tm (signup_request_events.action: created | notified | approved | rejected | expired |) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 227.19 Tm (activation_sent) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 213.59 Tm (signup_request_events.metadata) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 199.99 Tm (signup_request_events.created_at) Tj ET
+BT /F2 14 Tf 0.07 0.09 0.14 rg 1 0 0 1 50.00 169.39 Tm (Required APIs) Tj ET
+BT /F2 11.5 Tf 0.07 0.09 0.14 rg 1 0 0 1 50.00 136.39 Tm (Public API) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 113.89 Tm (POST /signup-requests) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 50.00 97.29 Tm (This endpoint creates a pending request and always returns a generic success response. It) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 50.00 81.79 Tm (must not log the visitor in or redirect them to the dashboard.) Tj ET
+BT /F1 8 Tf 0.45 0.49 0.56 rg 1 0 0 1 535.28 28 Tm (2) Tj ET
+endstream
+endobj
+9 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 8 0 R >>
+endobj
+10 0 obj
+<< /Length 5101 >>
+stream
+BT /F2 11.5 Tf 0.07 0.09 0.14 rg 1 0 0 1 50.00 781.89 Tm (Super Admin APIs) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 759.39 Tm (GET /admin/signup-requests) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 745.79 Tm (GET /admin/signup-requests/:id) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 732.19 Tm (POST /admin/signup-requests/:id/approve) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 718.59 Tm (POST /admin/signup-requests/:id/reject) Tj ET
+BT /F2 11.5 Tf 0.07 0.09 0.14 rg 1 0 0 1 50.00 693.99 Tm (Optional Admin APIs) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 671.49 Tm (POST /admin/signup-requests/:id/resend-activation) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 657.89 Tm (POST /admin/signup-requests/:id/mark-contacted) Tj ET
+BT /F2 11.5 Tf 0.07 0.09 0.14 rg 1 0 0 1 50.00 633.29 Tm (Activation APIs) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 610.79 Tm (GET /activate?token=...) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 597.19 Tm (POST /activate) Tj ET
+BT /F2 14 Tf 0.07 0.09 0.14 rg 1 0 0 1 50.00 566.59 Tm (Super Admin Approval Flow) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 50.00 541.59 Tm (Approval should happen in one database transaction.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 522.09 Tm (1.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 70.00 522.09 Tm (Lock the SignupRequest row.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 505.59 Tm (2.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 70.00 505.59 Tm (Confirm the status is still pending.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 489.09 Tm (3.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 70.00 489.09 Tm (Check for duplicate active user, organization, company, or domain.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 472.59 Tm (4.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 70.00 472.59 Tm (Create the organization.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 456.09 Tm (5.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 70.00 456.09 Tm (Create the first Admin user.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 439.59 Tm (6.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 70.00 439.59 Tm (Create the auth identity or activation token record.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 423.09 Tm (7.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 70.00 423.09 Tm (Create default sequences, settings, roles, and tenant defaults.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 406.59 Tm (8.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 70.00 406.59 Tm (Create subscription or trial records.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 390.09 Tm (9.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 70.00 390.09 Tm (Mark the signup request as approved.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 373.59 Tm (10.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 70.00 373.59 Tm (Store created_organization_id and created_user_id.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 357.09 Tm (11.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 70.00 357.09 Tm (Write audit events.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 50.00 338.59 Tm (Send emails only after the transaction commits, preferably through an outbox table or) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 50.00 323.09 Tm (background job.) Tj ET
+BT /F2 14 Tf 0.07 0.09 0.14 rg 1 0 0 1 50.00 289.59 Tm (Super Admin Rejection Flow) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 264.59 Tm (1.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 70.00 264.59 Tm (Lock the request.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 248.09 Tm (2.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 70.00 248.09 Tm (Confirm it is still pending.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 231.59 Tm (3.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 70.00 231.59 Tm (Set status to rejected.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 215.09 Tm (4.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 70.00 215.09 Tm (Store the rejecting Super Admin, timestamp, and reason.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 198.59 Tm (5.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 70.00 198.59 Tm (Write an audit event.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 182.09 Tm (6.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 70.00 182.09 Tm (Optionally send a polite rejection email.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 50.00 163.59 Tm (Do not immediately delete rejected requests. Keep them for audit history and duplicate) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 50.00 148.09 Tm (handling.) Tj ET
+BT /F2 14 Tf 0.07 0.09 0.14 rg 1 0 0 1 50.00 114.59 Tm (Email And Activation Link Flow) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 50.00 89.59 Tm (The best approach is to avoid collecting a password during the initial signup request.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 50.00 74.09 Tm (After approval, send an activation link.) Tj ET
+BT /F1 8 Tf 0.45 0.49 0.56 rg 1 0 0 1 535.28 28 Tm (3) Tj ET
+endstream
+endobj
+11 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 10 0 R >>
+endobj
+12 0 obj
+<< /Length 6240 >>
+stream
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 789.89 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 789.89 Tm (The link should be single-use.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 773.39 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 773.39 Tm (The link should expire, usually after 24 to 72 hours.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 756.89 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 756.89 Tm (Only a hashed token should be stored in the database.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 740.39 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 740.39 Tm (The token should be invalidated after use.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 723.89 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 723.89 Tm (The page should let the approved user set a password and verify their email.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 707.39 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 707.39 Tm (After activation, the user logs in manually.) Tj ET
+BT /F2 14 Tf 0.07 0.09 0.14 rg 1 0 0 1 50.00 674.89 Tm (Duplicate Handling) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 50.00 649.89 Tm (Normalize email, company, and domain before comparison.) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 630.39 Tm (lowercase\(trim\(email\)\)) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 616.79 Tm (lowercase\(trim\(company_name\)\)) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 603.19 Tm (lowercase\(domain\)) Tj ET
+BT /F2 11.5 Tf 0.07 0.09 0.14 rg 1 0 0 1 50.00 578.59 Tm (Recommended Rules) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 556.09 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 556.09 Tm (If the same email already has a pending request, do not create a duplicate. Show the) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 540.59 Tm (same generic success modal.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 524.09 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 524.09 Tm (If the same email is already an active user, do not reveal that publicly. Return the) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 508.59 Tm (same generic response or route to login/reset password separately.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 492.09 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 492.09 Tm (If the same company or domain has a pending request, flag it for Super Admin review or) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 476.59 Tm (merge internally.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 460.09 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 460.09 Tm (If the company already exists, block automatic approval unless a Super Admin explicitly) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 444.59 Tm (links the user to the existing organization.) Tj ET
+BT /F2 11.5 Tf 0.07 0.09 0.14 rg 1 0 0 1 50.00 418.09 Tm (Database Protection) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 395.59 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 395.59 Tm (Use database constraints in addition to application checks.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 379.09 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 379.09 Tm (Unique pending request by normalized_email.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 362.59 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 362.59 Tm (Unique active user email.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 346.09 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 346.09 Tm (Unique active organization domain if domain is reliable for your business model.) Tj ET
+BT /F2 14 Tf 0.07 0.09 0.14 rg 1 0 0 1 50.00 313.59 Tm (Security Requirements) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 288.59 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 288.59 Tm (Public signup response should always be generic.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 272.09 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 272.09 Tm (Do not reveal whether an email or company already exists.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 255.59 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 255.59 Tm (Rate-limit signup requests by IP and email.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 239.09 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 239.09 Tm (Add CAPTCHA if spam or abuse becomes likely.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 222.59 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 222.59 Tm (Store IP address and user agent.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 206.09 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 206.09 Tm (Never store plain activation tokens.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 189.59 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 189.59 Tm (Never store raw passwords in SignupRequest.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 173.09 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 173.09 Tm (Restrict approval and rejection APIs to Super Admin only.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 156.59 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 156.59 Tm (Use CSRF protection if admin authentication uses cookies.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 140.09 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 140.09 Tm (Validate all input server-side.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 123.59 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 123.59 Tm (Use audit logs for every important decision.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 107.09 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 107.09 Tm (Use an outbox or background job for email delivery.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 90.59 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 90.59 Tm (Expire old pending requests, for example after 30 days.) Tj ET
+BT /F1 8 Tf 0.45 0.49 0.56 rg 1 0 0 1 535.28 28 Tm (4) Tj ET
+endstream
+endobj
+13 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 12 0 R >>
+endobj
+14 0 obj
+<< /Length 3282 >>
+stream
+BT /F2 14 Tf 0.07 0.09 0.14 rg 1 0 0 1 50.00 775.89 Tm (Expiry And Cleanup) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 750.89 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 750.89 Tm (Set expires_at when the request is created.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 734.39 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 734.39 Tm (Automatically mark old pending requests as expired.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 717.89 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 717.89 Tm (Keep rejected and expired requests for a defined retention period.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 701.39 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 701.39 Tm (Use retention rules that match company policy and applicable privacy requirements.) Tj ET
+BT /F2 14 Tf 0.07 0.09 0.14 rg 1 0 0 1 50.00 668.89 Tm (Race-Condition Handling) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 50.00 643.89 Tm (Use row locking and database constraints so two Super Admins cannot approve the same) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 50.00 628.39 Tm (request twice.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 608.89 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 608.89 Tm (Use SELECT ... FOR UPDATE or the ORM equivalent.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 592.39 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 592.39 Tm (Approval should be idempotent where possible.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 575.89 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 575.89 Tm (If already approved, return the existing created user and organization.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 559.39 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 559.39 Tm (If rejected or expired, block approval unless the request is explicitly reopened.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 542.89 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 542.89 Tm (If creation fails, roll back the transaction.) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 52.00 526.39 Tm (-) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 63.00 526.39 Tm (Use an outbox table so email retries do not create duplicate accounts.) Tj ET
+BT /F2 14 Tf 0.07 0.09 0.14 rg 1 0 0 1 50.00 493.89 Tm (Final Recommendation) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 50.00 468.89 Tm (Use SignupRequest as the only record created during public signup. Create real SaaS tenant) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 50.00 453.39 Tm (data only after Super Admin approval.) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 433.89 Tm (SignupRequest pending -> Super Admin approves -> Organization/User/Auth/Subscription) Tj ET
+BT /F3 9.6 Tf 0.07 0.09 0.14 rg 1 0 0 1 58.00 420.29 Tm (created -> Activation email sent -> User sets password -> User logs in manually) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 50.00 403.69 Tm (This approach is safer, cleaner to audit, easier to support, and better aligned with a) Tj ET
+BT /F1 10.5 Tf 0.12 0.16 0.22 rg 1 0 0 1 50.00 388.19 Tm (controlled B2B SaaS onboarding model.) Tj ET
+BT /F1 8 Tf 0.45 0.49 0.56 rg 1 0 0 1 535.28 28 Tm (5) Tj ET
+endstream
+endobj
+15 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 14 0 R >>
+endobj
+xref
+0 16
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000148 00000 n 
+0000000218 00000 n 
+0000000293 00000 n 
+0000000361 00000 n 
+0000005691 00000 n 
+0000005843 00000 n 
+0000009661 00000 n 
+0000009813 00000 n 
+0000014967 00000 n 
+0000015121 00000 n 
+0000021414 00000 n 
+0000021568 00000 n 
+0000024903 00000 n 
+trailer
+<< /Size 16 /Root 1 0 R >>
+startxref
+25057
+%%EOF

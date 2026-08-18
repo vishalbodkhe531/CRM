@@ -1,0 +1,57 @@
+model Organization {
+  id                 String             @id @default(uuid())
+  name               String
+  slug               String             @unique
+  prefix             String             @unique
+  status             OrganizationStatus @default(ACTIVE)
+  authorizedPerson   String?
+  orgType            String?
+  mobile             String?
+  gstin              String?
+  address            String?
+  dateOfRegistration DateTime?
+  email              String?
+  remark             String?
+  companyLogo        String?
+  qrCode             String?
+  signature          String?
+
+  /// Soft delete ("archive"). Follows the same pattern as User.deletedAt so an
+  /// archived organization keeps referential integrity and can be restored.
+  /// Archiving also forces status = SUSPENDED, which is what actually locks the
+  /// organization's users out (see auth.middleware.ts).
+  deletedAt   DateTime?
+  deletedById String?
+  deletedBy   User?     @relation("OrganizationDeleter", fields: [deletedById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users             User[]
+  leads             Lead[]
+  items             Item[]
+  prospects         Prospect[]
+  leadSequence      LeadSequence[]
+  prospectSequence  ProspectSequence[]
+  userSequence      UserSequence[]
+  quotations        Quotation[]
+  quotationSequence QuotationSequence[]
+  auditLogs         AuditLog[]         @relation("AuditOrganization")
+  announcements     Announcement[]     @relation("OrganizationAnnouncements")
+  notifications     Notification[]     @relation("OrganizationNotifications")
+
+  /// Commercial terms. Optional in the schema, but backfillSubscriptions.ts
+  /// guarantees every live organization has one so no enforcement path has to
+  /// treat "no subscription" as a normal case.
+  subscription Subscription?
+
+  @@index([deletedAt])
+  @@index([slug])
+  @@index([status])
+  @@index([prefix])
+}
+
+enum OrganizationStatus {
+  ACTIVE
+  SUSPENDED
+}

@@ -1,0 +1,73 @@
+# ======================
+# Node modules
+# ======================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ======================
+# Environment variables
+# ======================
+.env
+.env.*
+.
+
+# ======================
+# Build / Dist folders
+# ======================
+dist/
+build/
+out/
+
+# ======================
+# Logs
+# ======================
+logs/
+*.log
+
+# ======================
+# OS files
+# ======================
+.DS_Store
+Thumbs.db
+
+# ======================
+# IDE / Editor settings
+# ======================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ======================
+# Coverage reports
+# ======================
+coverage/
+
+# ======================
+# Cache files
+# ======================
+.cache/
+.nyc_output/
+
+# ======================
+# Optional: Uploads / temp
+# ======================
+/uploads/
+tmp/
+temp/
+
+# ======================
+# Database
+# ======================
+*.sqlite
+*.sqlite3
+
+# ======================
+# TypeScript (if used)
+# ======================
+*.tsbuildinfo
+
+/src/generated/prisma

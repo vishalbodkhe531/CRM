@@ -1,0 +1,112 @@
+model Lead {
+  id     String @id @default(uuid())
+  leadNo String @unique
+
+  firstName String
+  lastName  String
+
+  profilePicture  String?
+  mobile          String?
+  alternateMobile String?
+
+  companyName String?
+  gstin       String?
+  email       String?
+
+  website         String?
+  linkedInProfile String?
+
+  address String?
+  city    String?
+  state   String?
+  pinCode String?
+
+  source          LeadSource?
+  industry         Industry?
+  customIndustry   String?
+  leadType         LeadType?
+
+  status LeadStatus @default(NEW)
+
+  productInterestId String?
+  productInterest   Item?   @relation("LeadProductInterest", fields: [productInterestId], references: [id])
+
+  requiredDescription String?
+
+  deletedAt   DateTime?
+  deletedById String?
+  deletedBy   User?     @relation("LeadDeletor", fields: [deletedById], references: [id])
+
+  // ✅ REQUIRED
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  assignedToId String?
+  assignedTo   User?   @relation("AssignedLeads", fields: [assignedToId], references: [id])
+
+  assignedById String?
+  assignedBy   User?   @relation("AssignedBy", fields: [assignedById], references: [id])
+
+  assignedAt DateTime?
+
+  createdById String
+  createdBy   User   @relation("LeadCreator", fields: [createdById], references: [id])
+
+  convertedAt   DateTime?
+  convertedById String?
+  convertedBy   User?     @relation("LeadConverter", fields: [convertedById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  prospect Prospect?
+
+  @@index([leadNo])
+  @@index([organizationId, createdAt])
+  @@index([organizationId, status, assignedToId, createdAt])
+}
+
+enum LeadSource {
+  COLD_CALL
+  EMAIL
+  REFERENCE
+  SOCIAL_MEDIA
+  WEBSITE
+  ADVERTISE
+  GOOGLE_ADS
+  EVENT
+  TRADE_SHOW
+  FACEBOOK
+  INSTAGRAM
+  LINKEDIN
+  OTHER
+}
+
+enum Industry {
+  IT
+  BANKING
+  EDUCATION
+  MANUFACTURING
+  HEALTHCARE
+  REAL_ESTATE
+  RETAIL
+  ECOMMERCE
+  AUTOMOBILE
+  CONSTRUCTION
+  TRAVEL_TOURISM
+  MEDIA_ENTERTAINMENT
+  OTHER
+}
+
+enum LeadType {
+  NEW
+  EXISTING
+}
+
+enum LeadStatus {
+  NEW
+  ATTEMPTED_CONTACT
+  CONTACTED
+  QUALIFIED
+  UNQUALIFIED
+}

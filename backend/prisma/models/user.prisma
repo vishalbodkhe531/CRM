@@ -1,0 +1,84 @@
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  MANAGER
+  EXECUTIVE
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+model User {
+  id       String @id @default(uuid())
+  email    String @unique
+  password String
+
+  firstName    String
+  middleName   String?
+  lastName     String
+  mobile       String?
+  profileImage String?
+  employeeId   String?   @unique
+  designation  String?
+  joiningDate  DateTime?
+
+  role   Role
+  status UserStatus @default(ACTIVE)
+
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+
+  managerId String?
+  manager   User?   @relation("UserManager", fields: [managerId], references: [id])
+  team      User[]  @relation("UserManager")
+
+  lastLoginAt       DateTime?
+  passwordChangedAt DateTime?
+
+  deletedAt    DateTime?
+  deletedById  String?
+  deletedBy    User?     @relation("UserDeleter", fields: [deletedById], references: [id])
+  usersDeleted User[]    @relation("UserDeleter")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  RefreshTokens      RefreshToken[]
+  PasswordResetOtps  PasswordResetOtp[]
+
+  itemsCreated Item[] @relation("ItemCreator")
+  itemsDeleted Item[] @relation("ItemDeleter")
+
+  leadsAssignedTo Lead[] @relation("AssignedLeads")
+  leadsAssignedBy Lead[] @relation("AssignedBy")
+  leadsCreated    Lead[] @relation("LeadCreator")
+  leadsDeleted    Lead[] @relation("LeadDeletor")
+  leadsConverted  Lead[] @relation("LeadConverter")
+
+  assignedProspects  Prospect[]         @relation("AssignedProspects")
+  followUpProspects  Prospect[]         @relation("FollowUpProspects")
+  prospectActivities ProspectActivity[] @relation("ProspectActivities")
+  prospectsDeleted   Prospect[]         @relation("ProspectDeleter")
+
+  quotationsCreated      Quotation[]              @relation("QuotationCreator")
+  quotationsDeleted      Quotation[]              @relation("QuotationDeleter")
+  quotationsAssigned     Quotation[]              @relation("AssignedQuotations")
+  quotationsApproved     Quotation[]              @relation("QuotationApprover")
+  quotationsRejected     Quotation[]              @relation("QuotationRejecter")
+  quotationStatusChanges QuotationStatusHistory[] @relation("QuotationStatusChanger")
+
+  auditLogs             AuditLog[]     @relation("AuditActor")
+  organizationsArchived Organization[] @relation("OrganizationDeleter")
+
+  announcementsCreated Announcement[]        @relation("AnnouncementCreator")
+  announcementReceipts AnnouncementReceipt[] @relation("AnnouncementReceipts")
+  notifications        Notification[]        @relation("UserNotifications")
+
+  /// Back-relation for PlatformSetting.updatedBy. Super-admins only, at most one row.
+  platformSettingUpdates PlatformSetting[] @relation("PlatformSettingUpdatedBy")
+
+  @@index([managerId])
+  @@index([organizationId])
+}

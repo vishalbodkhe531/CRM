@@ -1,0 +1,1 @@
+ALTER TABLE "Prospect" ALTER COLUMN "leadId" DROP NOT NULL;

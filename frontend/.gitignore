@@ -1,0 +1,70 @@
+# ======================
+# Dependencies
+# ======================
+node_modules/
+.pnpm-store/
+
+# ======================
+# Environment files
+# ======================
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+
+# ======================
+# Vite build output
+# ======================
+dist/
+dist-ssr/
+
+# ======================
+# Cache
+# ======================
+.vite/
+.cache/
+
+# ======================
+# Logs
+# ======================
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# ======================
+# IDE / Editor
+# ======================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ======================
+# OS files
+# ======================
+.DS_Store
+Thumbs.db
+
+# ======================
+# Testing
+# ======================
+coverage/
+
+# ======================
+# TypeScript build artifacts
+# ======================
+*.js
+*.jsx
+*.d.ts
+!src/vite-env.d.ts
+*.map
+*.tsbuildinfo
+
+# Whitelist config files
+!eslint.config.js
+!vite.config.ts
+!postcss.config.js
+!tailwind.config.js

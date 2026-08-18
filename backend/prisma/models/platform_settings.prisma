@@ -1,0 +1,35 @@
+/// Platform-wide configuration. Exactly one row.
+///
+/// Distinct from Organization: these values apply across every tenant and are
+/// only a super-admin's to change. They live in the database rather than in env
+/// so an operator can edit them from the console without a redeploy — env stays
+/// for things that must be set before the process boots (secrets, connection
+/// strings, ports).
+///
+/// The singleton is enforced by `id`, which is pinned to SINGLETON_ID rather
+/// than defaulted to a uuid: a settings table that can grow a second row is a
+/// table where half the app reads the wrong one.
+model PlatformSetting {
+  id String @id
+
+  /// Product name shown in the sidebar and page titles.
+  platformName String @default("Emvesso CRM")
+
+  /// Support contacts surfaced on the Help page. Null renders no contact rather
+  /// than a placeholder — a wrong support address is worse than none.
+  supportEmail String?
+  supportPhone String?
+
+  /// Days of audit history to keep. Null means keep forever, which is the
+  /// default: silently discarding a compliance trail must be opt-in.
+  auditRetentionDays Int?
+
+  /// Plan assigned to newly created organizations. SetNull so retiring a plan
+  /// cannot cascade into deleting the settings row.
+  defaultPlanId String?
+  defaultPlan   Plan?   @relation("PlatformDefaultPlan", fields: [defaultPlanId], references: [id], onDelete: SetNull)
+
+  updatedAt   DateTime @updatedAt
+  updatedById String?
+  updatedBy   User?    @relation("PlatformSettingUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+}

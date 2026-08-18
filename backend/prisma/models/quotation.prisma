@@ -1,0 +1,88 @@
+model Quotation {
+  id            String   @id @default(uuid())
+  quotationNo   String
+  partyName     String
+  contactPerson String
+  refNo         String
+  date          DateTime
+
+  status     QuotationStatus @default(PENDING)
+  details    Json?
+  currency   String          @default("INR")
+  subtotal   Decimal         @default(0) @db.Decimal(18, 2)
+  taxTotal   Decimal         @default(0) @db.Decimal(18, 2)
+  tdsAmount  Decimal         @default(0) @db.Decimal(18, 2)
+  roundOff   Decimal         @default(0) @db.Decimal(18, 2)
+  grandTotal Decimal         @default(0) @db.Decimal(18, 2)
+  version    Int             @default(1)
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  assignedToId String?
+  assignedTo   User?   @relation("AssignedQuotations", fields: [assignedToId], references: [id])
+
+  createdById String
+  createdBy   User   @relation("QuotationCreator", fields: [createdById], references: [id])
+
+  deletedAt   DateTime?
+  deletedById String?
+  deletedBy   User?     @relation("QuotationDeleter", fields: [deletedById], references: [id])
+
+  prospectId String?
+  prospect   Prospect? @relation(fields: [prospectId], references: [id])
+
+  approvedAt   DateTime?
+  approvedById String?
+  approvedBy   User?     @relation("QuotationApprover", fields: [approvedById], references: [id])
+
+  rejectedAt      DateTime?
+  rejectedById    String?
+  rejectedBy      User?     @relation("QuotationRejecter", fields: [rejectedById], references: [id])
+  rejectionReason String?
+
+  statusHistory QuotationStatusHistory[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([organizationId, quotationNo])
+  @@index([organizationId, deletedAt, createdAt])
+  @@index([organizationId, status, date])
+  @@index([organizationId, assignedToId, deletedAt])
+  @@index([prospectId])
+}
+
+enum QuotationStatus {
+  APPROVED
+  PENDING
+  REJECTED
+}
+
+model QuotationSequence {
+  organizationId String
+  year           Int
+  lastSequence   Int      @default(0)
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@id([organizationId, year])
+}
+
+model QuotationStatusHistory {
+  id          String    @id @default(uuid())
+  quotationId String
+  quotation   Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+
+  fromStatus QuotationStatus?
+  toStatus   QuotationStatus
+  reason     String?
+
+  changedById String
+  changedBy   User     @relation("QuotationStatusChanger", fields: [changedById], references: [id])
+  changedAt   DateTime @default(now())
+
+  @@index([quotationId, changedAt(sort: Desc)])
+  @@index([changedById])
+}
