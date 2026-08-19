@@ -1,15 +1,6 @@
 import { prisma } from "../config/db";
 import { resolveSubscriptionState } from "../utils/business/subscription.utils";
 
-/**
- * Read-only report on the plan catalogue and who is on what.
- *
- * Written to answer "which plans can we safely retire" — a plan with live
- * subscribers cannot simply be deleted, so this shows the subscriber count and
- * the resolved feature values side by side to expose duplicates.
- *
- * Run:  npx tsx src/scripts/inspectPlans.ts
- */
 async function main() {
   const plans = await prisma.plan.findMany({
     include: {

@@ -6,25 +6,6 @@ import {
   type FeatureKey,
 } from "../contracts/constants";
 
-/**
- * Default system plans — created once at installation.
- *
- * Idempotent and safe to run on every deploy, but deliberately NON-DESTRUCTIVE:
- * a plan that already exists is left completely alone. Once a super-admin has
- * edited pricing or limits through the console, a redeploy resetting them to the
- * values checked into git would be a billing incident.
- *
- * `--force-update` re-applies the seed values, including feature rows. Use it
- * intentionally, never as part of an automated deploy.
- *
- * `--prune` deletes plans that are NOT in the seed — the ones hand-created in
- * the console. A plan with subscribers is never deleted; it is reported so the
- * operator can retire it instead. Together the two flags make this file the
- * authoritative definition of the catalogue.
- *
- * Run:  npx tsx src/scripts/seedPlans.ts [--force-update] [--prune]
- */
-
 const FORCE_UPDATE = process.argv.includes("--force-update");
 const PRUNE = process.argv.includes("--prune");
 

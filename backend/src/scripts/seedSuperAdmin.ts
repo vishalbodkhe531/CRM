@@ -3,21 +3,6 @@ import { hashPassword } from "../utils/auth/password";
 import { logger } from "../config/logger";
 import { Role } from "@prisma/client";
 
-/**
- * Super admin seed / break-glass recovery.
- *
- * There are deliberately NO hardcoded credential defaults. A fallback password
- * committed to the repository is a live vulnerability: it ships to production,
- * it is identical for every deployment, and anyone with read access to the
- * source has platform-wide admin. Both variables must be supplied by the
- * environment or this step does nothing.
- *
- * Recovery: super admins cannot reset their own password through the app
- * (there is no email transport, and resetUserPassword refuses self-service), so
- * this script is the break-glass path. Set SUPER_ADMIN_FORCE_RESET=true along
- * with SUPER_ADMIN_EMAIL and SUPER_ADMIN_PASSWORD, then run `npm run seed`.
- * That resets the password and revokes every existing session for the account.
- */
 const SUPER_ADMIN_EMAIL = process.env.SUPER_ADMIN_EMAIL?.trim();
 const SUPER_ADMIN_PASSWORD = process.env.SUPER_ADMIN_PASSWORD;
 const FORCE_RESET = process.env.SUPER_ADMIN_FORCE_RESET === "true";
@@ -136,13 +121,6 @@ export const seedSuperAdminUser = async () => {
   }
 };
 
-/**
- * Allow `npm run seed` to actually execute.
- *
- * Without this the script only exported the function, so running it directly
- * was a silent no-op and the break-glass path above would never fire — seeding
- * only ever happened as a side effect of server startup.
- */
 if (require.main === module) {
   seedSuperAdminUser()
     .catch((error) => {
