@@ -43,22 +43,23 @@ const getStartupHint = (error: unknown): string | undefined => {
 
 const start = async () => {
   try {
-    // ✅ Ensure DB is reachable
+    //Ensure DB is reachable
     await prisma.$queryRawUnsafe("SELECT 1");
     logger.info("Database connected");
 
-    // ✅ Seed (safe - idempotent)
+    //Seed (safe - idempotent)
     await seedSuperAdminUser();
 
-    // ✅ Start Token Cleanup (Every 6 hours)
+    //Start Token Cleanup (Every 6 hours)
     const cleanupInterval = startTokenCleanupJob();
 
-    // ✅ Start server
+    //Start server
     const server = app.listen(PORT, () => {
       logger.info(`Server running on port ${PORT} in ${env.NODE_ENV} mode`);
+      // logger.info(`Server running on port ${PORT} in ${env.NODE_ENV} mode`);
     });
 
-    // ✅ Graceful shutdown (simple version)
+    //Graceful shutdown (simple version)
     const shutdown = async () => {
       logger.info("Shutting down...");
       clearInterval(cleanupInterval);
