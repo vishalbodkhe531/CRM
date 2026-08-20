@@ -1,0 +1,55 @@
+# Stage 1: Build stage
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Install openssl and build dependencies for native modules (e.g. bcrypt)
+RUN apk add --no-cache openssl python3 make g++
+
+# Copy package management files
+COPY package*.json ./
+
+# Copy Prisma schema, config, tsconfig, and source code (needed by prisma.config.ts)
+COPY prisma ./prisma
+COPY prisma.config.ts ./
+COPY tsconfig.json ./
+COPY src ./src
+
+# Install dependencies (skipping postinstall scripts until source & schema are copied)
+RUN npm install --ignore-scripts
+
+# Generate Prisma Client
+RUN npx prisma generate
+
+# Build TypeScript to dist
+RUN npm run build
+
+# Stage 2: Production runner stage
+FROM node:20-alpine AS runner
+
+WORKDIR /app
+
+# Install openssl runtime dependency
+RUN apk add --no-cache openssl
+
+ENV NODE_ENV=production
+ENV PORT=5000
+
+# Copy package management files
+COPY package*.json ./
+
+# Install only production dependencies
+RUN npm install --omit=dev --ignore-scripts
+
+# Copy generated Prisma files and config from builder
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+
+# Copy compiled TypeScript code from builder
+COPY --from=builder /app/dist ./dist
+
+EXPOSE 5000
+
+CMD ["node", "dist/src/index.js"]

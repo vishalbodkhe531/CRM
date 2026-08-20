@@ -12,7 +12,7 @@ pnpm-debug.log*
 # ======================
 .env
 .env.*
-.
+secret.yaml
 
 # ======================
 # Build / Dist folders
