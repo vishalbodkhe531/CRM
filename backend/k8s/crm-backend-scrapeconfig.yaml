@@ -1,0 +1,12 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ScrapeConfig
+metadata:
+  name: crm-backend
+  namespace: monitoring
+  labels:
+    release: crm-prometheus-stack
+spec:
+  staticConfigs:
+    - targets:
+        - crm-backend-service.default.svc.cluster.local:5000
+  metricsPath: /metrics
